@@ -1,4 +1,4 @@
-<?php
+<?php //hotel_detail.php
 include 'db.php';  
 include 'functions.php'; 
 

@@ -1,12 +1,11 @@
-<?php
-include 'db.php'; // เชื่อมต่อฐานข้อมูล
+<?php //get.php
+include 'db.php'; 
 
 if (isset($_POST['region_id'])) {
-     $regionId = $_POST['region_id']; // รับค่าจาก POST
+     $regionId = $_POST['region_id']; 
 
-     // คำสั่ง SQL: ดึงจังหวัดที่อยู่ใน  ที่เลือก
      $query = "SELECT * FROM provinces WHERE region_id = ?";
-     $stmt = $conn->prepare($query); // เตรียมคำสั่ง SQL
+     $stmt = $conn->prepare($query); 
 
      if ($stmt) {
           $stmt->bind_param('i', $regionId);
@@ -22,7 +21,7 @@ if (isset($_POST['region_id'])) {
                echo '<option value="">-- ไม่มีข้อมูลจังหวัด --</option>';
           }
 
-          $stmt->close(); // ปิด Statement
+          $stmt->close(); 
      } else {
           echo '<option value="">-- SQL Error: ' . $conn->error . ' --</option>';
      }

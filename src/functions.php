@@ -1,4 +1,4 @@
-<?php
+<?php //functions.php
 function getHotelDetailsById($id) {
     global $pdo;
     $stmt = $pdo->prepare("

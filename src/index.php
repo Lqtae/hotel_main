@@ -1,11 +1,8 @@
-<?php
-require 'db.php';  // ใช้ไฟล์เชื่อมต่อฐานข้อมูล
+<?php //index.php
+require 'db.php';  
 
-// ดึงข้อมูลภาค
 $regionsQuery = $pdo->query("SELECT * FROM regions");
 $regions = $regionsQuery->fetchAll(PDO::FETCH_ASSOC);
-
-// ดึงข้อมูลจังหวัดทั้งหมด
 $provincesQuery = $pdo->query("SELECT * FROM provinces");
 $provinces = $provincesQuery->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -78,56 +75,48 @@ $provinces = $provincesQuery->fetchAll(PDO::FETCH_ASSOC);
                 provinceSelect.disabled = true;
             }
         });
-
-        document.getElementById('search').addEventListener('input', performSearch);
         document.getElementById('region').addEventListener('change', performSearch);
-        document.getElementById('province').addEventListener('change', performSearch);
+            document.getElementById('province').addEventListener('change', performSearch);
+            document.getElementById('search').addEventListener('input', performSearch);
 
-        function performSearch() {
-            const query = document.getElementById('search').value.trim();
-            const region = document.getElementById('region').value;
-            const province = document.getElementById('province').value;
+            function performSearch() {
+                const query = document.getElementById('search').value.trim();
+                const region = document.getElementById('region').value;
+                const province = document.getElementById('province').value;
 
-            console.log('Query:', query, 'Region:', region, 'Province:', province);  
+                if (query.length === 0 && region === "" && province === "") {
+                    document.getElementById('results').innerHTML = '<p class="text-gray-500 text-sm">กรุณาใส่คำค้นหาที่ช่องด้านบน</p>';
+                    return;
+                }
 
-            if (query.length === 0 && region === "" && province === "") {
-                document.getElementById('results').innerHTML = '<p class="text-gray-500 text-sm">กรุณาใส่คำค้นหาที่ช่องด้านบน</p>';
-                return;
+                // ส่งข้อมูลไปยัง search.php เพื่อดึงผลลัพธ์ใหม่
+                fetch(`search.php?query=${encodeURIComponent(query)}&region=${encodeURIComponent(region)}&province=${encodeURIComponent(province)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const resultsContainer = document.getElementById('results');
+                        resultsContainer.innerHTML = ''; // เคลียร์ผลลัพธ์เก่า
+
+                        if (data.length > 0) {
+                            data.forEach(item => {
+                                const resultItem = document.createElement('div');
+                                resultItem.className = 'p-4 bg-gray-100 rounded-lg shadow-sm';
+                                resultItem.innerHTML = `
+                                    <a href="hotel_detail.php?id=${item.hotel_id}" class="text-xl font-semibold text-blue-600">${item.hotel_name}</a>
+                                    <p class="text-gray-700">ที่อยู่: ${item.address}</p>
+                                    <p class="text-gray-700">จังหวัด: ${item.province_name}</p>
+                                    <p class="text-gray-700">ภาค: ${item.region_name}</p>
+                                `;
+                                resultsContainer.appendChild(resultItem);
+                            });
+                        } else {
+                            resultsContainer.innerHTML = '<p class="text-gray-500 text-sm">ไม่พบผลลัพธ์</p>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching search results:', error);
+                        document.getElementById('results').innerHTML = '<p class="text-red-500 text-sm">เกิดข้อผิดพลาดในการค้นหา</p>';
+                    });
             }
-
-            fetch(`search.php?query=${encodeURIComponent(query)}&region=${encodeURIComponent(region)}&province=${encodeURIComponent(province)}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Data:', data);  
-                    const resultsContainer = document.getElementById('results');
-                    resultsContainer.innerHTML = '';
-
-                    if (data.length > 0) {
-                        data.forEach(item => {
-                            const resultItem = document.createElement('div');
-                            resultItem.className = 'p-4 bg-gray-100 rounded-lg shadow-sm';
-                            resultItem.innerHTML = `
-                                <a href="hotel_detail.php?id=${item.hotel_id}" class="text-xl font-semibold text-blue-600">${item.hotel_name}</a>
-                                <p class="text-gray-700">ที่อยู่: ${item.address}</p>
-                                <p class="text-gray-700">จังหวัด: ${item.province_name}</p>
-                                <p class="text-gray-700">ภาค: ${item.region_name}</p>
-                            `;
-                            resultsContainer.appendChild(resultItem);
-                        });
-                    } else {
-                        resultsContainer.innerHTML = '<p class="text-gray-500 text-sm">ไม่พบผลลัพธ์</p>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching search results:', error);
-                    document.getElementById('results').innerHTML = '<p class="text-red-500 text-sm">เกิดข้อผิดพลาดในการค้นหา</p>';
-                });
-        }
     </script>
 </body>
 </html>

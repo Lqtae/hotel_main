@@ -1,4 +1,4 @@
-<?php
+<?php //db.php
 $host = 'localhost';
 $dbname = 'hotel_main'; 
 $username = 'root'; 
