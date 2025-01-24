@@ -1,43 +1,42 @@
-<?php //search.php
+<?php
 require 'db.php';
 
-header('Content-Type: application/json');
-
-$query = $_GET['query'] ?? '';
-$region = $_GET['region'] ?? '';
-$province = $_GET['province'] ?? '';
-
-// เพิ่มการ debug สำหรับตรวจสอบค่าที่ได้รับ
-error_log('Query: ' . $query);
-error_log('Region: ' . $region);
-error_log('Province: ' . $province);
+$query = isset($_GET['query']) ? $_GET['query'] : '';
+$region = isset($_GET['region']) ? $_GET['region'] : '';
+$province = isset($_GET['province']) ? $_GET['province'] : '';
 
 $sql = "SELECT hotels.hotel_id, hotels.hotel_name, hotels.address, provinces.province_name, regions.region_name
         FROM hotels
-        INNER JOIN provinces ON hotels.province_id = provinces.province_id
-        INNER JOIN regions ON provinces.region_id = regions.region_id
-        WHERE hotels.hotel_name LIKE :query OR provinces.province_name LIKE :query";
+        JOIN provinces ON hotels.province_id = provinces.province_id
+        JOIN regions ON provinces.region_id = regions.region_id";
 
-$params = ['query' => "%$query%"];
+$conditions = [];
+$params = [];
 
-if ($region) {
-    $sql .= " AND regions.region_name = :region";
-    $params['region'] = $region;
+if (!empty($query)) {
+    $conditions[] = "(hotels.hotel_name LIKE :query OR provinces.province_name LIKE :query)";
+    $params[':query'] = "%$query%";
 }
 
-if ($province) {
-    $sql .= " AND provinces.province_name = :province";
-    $params['province'] = $province;
+if (!empty($region)) {
+    $conditions[] = "regions.region_id = :region";
+    $params[':region'] = $region;
 }
 
-// เพิ่มการ debug SQL query
-error_log('SQL: ' . $sql);
+if (!empty($province)) {
+    $conditions[] = "provinces.province_id = :province";
+    $params[':province'] = $province;
+}
+
+if ($conditions) {
+    $sql .= " WHERE " . implode(' AND ', $conditions);
+}
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 
-$data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// ส่งผลลัพธ์กลับไปเป็น JSON
-echo json_encode($data);
+header('Content-Type: application/json');
+echo json_encode($results);
 ?>

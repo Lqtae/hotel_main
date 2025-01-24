@@ -21,15 +21,20 @@ $provinces = $provincesQuery->fetchAll(PDO::FETCH_ASSOC);
     </header>
 
     <main class="flex-1 w-full max-w-4xl mx-auto mt-8 px-4">
-        <div class="bg-white shadow-md rounded-lg p-6">
-            <div class="mb-4">
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <div class="flex items-center mb-4 gap-4">
+            <!-- ช่องค้นหา -->
+            <div class="flex-grow">
                 <label for="search" class="block text-gray-700 text-sm font-medium">ค้นหา:</label>
-                <input type="text" id="search" placeholder="ค้นหาโรงแรมหรือจังหวัด" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="search" placeholder="ค้นหาโรงแรมหรือจังหวัด" 
+                       class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black">
             </div>
 
-            <div class="mb-4">
+            <!-- Dropdown ภาค -->
+            <div>
                 <label for="region" class="block text-gray-700 text-sm font-medium">เลือกภาค:</label>
-                <select id="region" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+                <select id="region" 
+                        class="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black">
                     <option value="">-- เลือกภาค --</option>
                     <?php foreach ($regions as $region): ?>
                         <option value="<?= $region['region_id']; ?>"><?= $region['region_name']; ?></option>
@@ -37,86 +42,116 @@ $provinces = $provincesQuery->fetchAll(PDO::FETCH_ASSOC);
                 </select>
             </div>
 
-            <div class="mb-4">
+            <!-- Dropdown จังหวัด -->
+            <div>
                 <label for="province" class="block text-gray-700 text-sm font-medium">เลือกจังหวัด:</label>
-                <select id="province" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500" disabled>
+                <select id="province" 
+                        class="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black" disabled>
                     <option value="">-- เลือกจังหวัด --</option>
                 </select>
             </div>
 
-            <div id="results" class="mt-4 space-y-4">
-                <p class="text-gray-500 text-sm">กรุณาใส่คำค้นหาที่ช่องด้านบน</p>
+            <!-- ปุ่มค้นหา -->
+            <div>
+                <button id="searchBtn" 
+                        class="mt-6 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 focus:outline-none">ค้นหา</button>
             </div>
         </div>
-    </main>
 
-    <footer class="w-full bg-white py-4 mt-8 shadow-md">
-        <p class="text-black text-center text-sm">&copy; 2025 Hotel Search</p>
-    </footer>
+        <!-- แสดงผลลัพธ์ -->
+        <div id="results" class="mt-4 space-y-4">
+            <!-- แสดงโรงแรมเริ่มต้น -->
+            <?php
+            // ดึงโรงแรมทั้งหมดเมื่อเปิดหน้าแรก
+            $hotelsQuery = $pdo->query("SELECT hotels.*, provinces.province_name, regions.region_name 
+                                        FROM hotels 
+                                        JOIN provinces ON hotels.province_id = provinces.province_id
+                                        JOIN regions ON provinces.region_id = regions.region_id");
+            $hotels = $hotelsQuery->fetchAll(PDO::FETCH_ASSOC);
 
-    <script>
-        const provincesByRegion = <?php echo json_encode($provinces); ?>;
+            foreach ($hotels as $hotel): ?>
+                <div class="p-4 bg-gray-100 rounded-lg shadow-sm">
+                    <a href="hotel_detail.php?id=<?= $hotel['hotel_id']; ?>" 
+                       class="text-xl font-semibold text-blue-600"><?= $hotel['hotel_name']; ?></a>
+                    <p class="text-gray-700">ที่อยู่: <?= $hotel['address']; ?></p>
+                    <p class="text-gray-700">จังหวัด: <?= $hotel['province_name']; ?></p>
+                    <p class="text-gray-700">ภาค: <?= $hotel['region_name']; ?></p>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</main>
+            <footer class="w-full bg-white py-4 mt-8 shadow-md">
+                <p class="text-black text-center text-sm">
+                    &copy; 2025 <a href="admin_dashboard.php" class="text-black hover:font-semibold">Where's Hotel</a>
+                </p>
+            </footer>
 
-        document.getElementById('region').addEventListener('change', function() {
-            const region = this.value;
-            const provinceSelect = document.getElementById('province');
 
-            provinceSelect.innerHTML = '<option value="">-- เลือกจังหวัด --</option>';
+<script>
+    const provincesByRegion = <?php echo json_encode($provinces); ?>;
 
-            if (region) {
-                provincesByRegion.filter(province => province.region_id == region).forEach(province => {
-                    const option = document.createElement('option');
-                    option.value = province.province_id;
-                    option.textContent = province.province_name;
-                    provinceSelect.appendChild(option);
-                });
-                provinceSelect.disabled = false;
-            } else {
-                provinceSelect.disabled = true;
-            }
-        });
-        document.getElementById('region').addEventListener('change', performSearch);
-            document.getElementById('province').addEventListener('change', performSearch);
-            document.getElementById('search').addEventListener('input', performSearch);
+    // อัปเดตจังหวัดเมื่อเลือกภาค
+    document.getElementById('region').addEventListener('change', function() {
+        const region = this.value;
+        const provinceSelect = document.getElementById('province');
 
-            function performSearch() {
-                const query = document.getElementById('search').value.trim();
-                const region = document.getElementById('region').value;
-                const province = document.getElementById('province').value;
+        provinceSelect.innerHTML = '<option value="">-- เลือกจังหวัด --</option>';
 
-                if (query.length === 0 && region === "" && province === "") {
-                    document.getElementById('results').innerHTML = '<p class="text-gray-500 text-sm">กรุณาใส่คำค้นหาที่ช่องด้านบน</p>';
-                    return;
-                }
+        if (region) {
+            provincesByRegion.filter(province => province.region_id == region).forEach(province => {
+                const option = document.createElement('option');
+                option.value = province.province_id;
+                option.textContent = province.province_name;
+                provinceSelect.appendChild(option);
+            });
+            provinceSelect.disabled = false;
+        } else {
+            provinceSelect.disabled = true;
+        }
 
-                // ส่งข้อมูลไปยัง search.php เพื่อดึงผลลัพธ์ใหม่
-                fetch(`search.php?query=${encodeURIComponent(query)}&region=${encodeURIComponent(region)}&province=${encodeURIComponent(province)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const resultsContainer = document.getElementById('results');
-                        resultsContainer.innerHTML = ''; // เคลียร์ผลลัพธ์เก่า
+        performSearch(); // เรียกค้นหาเมื่อเปลี่ยนภาค
+    });
 
-                        if (data.length > 0) {
-                            data.forEach(item => {
-                                const resultItem = document.createElement('div');
-                                resultItem.className = 'p-4 bg-gray-100 rounded-lg shadow-sm';
-                                resultItem.innerHTML = `
-                                    <a href="hotel_detail.php?id=${item.hotel_id}" class="text-xl font-semibold text-blue-600">${item.hotel_name}</a>
-                                    <p class="text-gray-700">ที่อยู่: ${item.address}</p>
-                                    <p class="text-gray-700">จังหวัด: ${item.province_name}</p>
-                                    <p class="text-gray-700">ภาค: ${item.region_name}</p>
-                                `;
-                                resultsContainer.appendChild(resultItem);
-                            });
-                        } else {
-                            resultsContainer.innerHTML = '<p class="text-gray-500 text-sm">ไม่พบผลลัพธ์</p>';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching search results:', error);
-                        document.getElementById('results').innerHTML = '<p class="text-red-500 text-sm">เกิดข้อผิดพลาดในการค้นหา</p>';
+    // กดค้นหาหรือพิมพ์ในช่องค้นหา
+    document.getElementById('searchBtn').addEventListener('click', performSearch);
+    document.getElementById('search').addEventListener('input', performSearch);
+    document.getElementById('province').addEventListener('change', performSearch);
+
+    // ฟังก์ชันค้นหา
+    function performSearch() {
+        const query = document.getElementById('search').value.trim();
+        const region = document.getElementById('region').value;
+        const province = document.getElementById('province').value;
+
+        fetch(`search.php?query=${encodeURIComponent(query)}&region=${encodeURIComponent(region)}&province=${encodeURIComponent(province)}`)
+            .then(response => response.json())
+            .then(data => {
+                const resultsContainer = document.getElementById('results');
+                resultsContainer.innerHTML = ''; // เคลียร์ผลลัพธ์เก่า
+
+                if (data.length > 0) {
+                    data.forEach(item => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'p-4 bg-gray-100 rounded-lg shadow-sm';
+                        resultItem.innerHTML = `
+                            <a href="hotel_detail.php?id=${item.hotel_id}" class="text-xl font-semibold text-blue-600">${item.hotel_name}</a>
+                            <p class="text-gray-700">ที่อยู่: ${item.address}</p>
+                            <p class="text-gray-700">จังหวัด: ${item.province_name}</p>
+                            <p class="text-gray-700">ภาค: ${item.region_name}</p>
+                        `;
+                        resultsContainer.appendChild(resultItem);
                     });
-            }
-    </script>
+                } else {
+                    resultsContainer.innerHTML = '<p class="text-gray-500 text-sm">ไม่พบผลลัพธ์</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching search results:', error);
+                document.getElementById('results').innerHTML = '<p class="text-red-500 text-sm">เกิดข้อผิดพลาดในการค้นหา</p>';
+            });
+    }
+</script>
+
 </body>
 </html>
