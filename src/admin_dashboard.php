@@ -12,9 +12,12 @@ $hotels = $pdo->query("
 // ดึงข้อมูลจังหวัดทั้งหมด
 $provinces = $pdo->query("SELECT * FROM provinces")->fetchAll(PDO::FETCH_ASSOC);
 
+// ดึงข้อมูลประเภทห้องทั้งหมด
+$roomTypes = $pdo->query("SELECT * FROM room_types")->fetchAll(PDO::FETCH_ASSOC);
+
 // จัดการคำขอ POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if ($_POST['action'] === 'add') {
+    if ($_POST['action'] === 'add_hotel') {
         // เพิ่มโรงแรม
         $hotelName = $_POST['hotel_name'];
         $address = $_POST['address'];
@@ -28,6 +31,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':hotel_name' => $hotelName,
             ':address' => $address,
             ':province_id' => $provinceId,
+        ]);
+        header('Location: admin_dashboard.php');
+        exit;
+    } elseif ($_POST['action'] === 'add_room') {
+        // เพิ่มห้อง
+        $hotelId = $_POST['hotel_id'];
+        $roomTypeId = $_POST['room_type_id'];
+        $roomName = $_POST['room_name'];
+        $roomDescription = $_POST['room_description'];
+        $roomPrice = $_POST['room_price'];
+
+        $stmt = $pdo->prepare("
+            INSERT INTO hotel_rooms (hotel_id, room_type_id, room_name, room_description, room_price) 
+            VALUES (:hotel_id, :room_type_id, :room_name, :room_description, :room_price)
+        ");
+        $stmt->execute([
+            ':hotel_id' => $hotelId,
+            ':room_type_id' => $roomTypeId,
+            ':room_name' => $roomName,
+            ':room_description' => $roomDescription,
+            ':room_price' => $roomPrice,
         ]);
         header('Location: admin_dashboard.php');
         exit;
@@ -77,11 +101,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </header>
 
 <main class="w-full max-w-4xl mx-auto mt-8 px-4">
-    <!-- ส่วนเพิ่มข้อมูล -->
+    <!-- ส่วนเพิ่มข้อมูลโรงแรม -->
     <div class="bg-white shadow-md rounded-lg p-6 mb-8">
         <h2 class="text-xl font-bold mb-4">เพิ่มข้อมูลโรงแรม</h2>
         <form method="POST">
-            <input type="hidden" name="action" value="add">
+            <input type="hidden" name="action" value="add_hotel">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label for="hotelName" class="block text-gray-700">ชื่อโรงแรม:</label>
@@ -102,6 +126,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="mt-4 flex justify-end">
                 <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg">เพิ่มโรงแรม</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ส่วนเพิ่มข้อมูลห้อง -->
+    <div class="bg-white shadow-md rounded-lg p-6 mb-8">
+        <h2 class="text-xl font-bold mb-4">เพิ่มข้อมูลห้อง</h2>
+        <form method="POST">
+            <input type="hidden" name="action" value="add_room">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="hotel" class="block text-gray-700">โรงแรม:</label>
+                    <select id="hotel" name="hotel_id" class="w-full border px-4 py-2 rounded-lg">
+                        <?php foreach ($hotels as $hotel): ?>
+                            <option value="<?= $hotel['hotel_id'] ?>"><?= $hotel['hotel_name'] ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div>
+                    <label for="roomType" class="block text-gray-700">ประเภทห้อง:</label>
+                    <select id="roomType" name="room_type_id" class="w-full border px-4 py-2 rounded-lg">
+                        <?php foreach ($roomTypes as $roomType): ?>
+                            <option value="<?= $roomType['room_type_id'] ?>"><?= $roomType['room_type_name'] ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div>
+                    <label for="roomName" class="block text-gray-700">ชื่อห้อง:</label>
+                    <input type="text" id="roomName" name="room_name" class="w-full border px-4 py-2 rounded-lg" required>
+                </div>
+                <div>
+                    <label for="roomDescription" class="block text-gray-700">รายละเอียด:</label>
+                    <textarea id="roomDescription" name="room_description" class="w-full border px-4 py-2 rounded-lg" required></textarea>
+                </div>
+                <div>
+                    <label for="roomPrice" class="block text-gray-700">ราคา:</label>
+                    <input type="number" id="roomPrice" name="room_price" class="w-full border px-4 py-2 rounded-lg" required>
+                </div>
+            </div>
+            <div class="mt-4 flex justify-end">
+                <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg">เพิ่มห้อง</button>
             </div>
         </form>
     </div>
@@ -148,9 +213,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </main>
 
-            <footer class="bg-white py-4 text-center text-black mt-8 shadow-md">
-                <p>&copy; 2025 Admin Dashboard</p>
-            </footer>
+<footer class="bg-white py-4 text-center text-black mt-8 shadow-md">
+    <p>&copy; 2025 Admin Dashboard</p>
+</footer>
 
 <div id="editModal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
     <div class="bg-white shadow-lg rounded-lg w-full max-w-md p-6">
@@ -176,22 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="flex justify-end gap-2">
                 <button type="button" id="cancelEdit" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">ยกเลิก</button>
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">บันทึก</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div id="deleteModal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
-    <div class="bg-white shadow-lg rounded-lg w-full max-w-md p-6">
-        <h3 class="text-xl font-bold mb-4">ยืนยันการลบ</h3>
-        <p class="text-gray-700 mb-4">คุณแน่ใจหรือไม่ว่าต้องการลบโรงแรมนี้?</p>
-        <form method="POST">
-            <input type="hidden" name="action" value="delete">
-            <input type="hidden" name="hotel_id" id="deleteHotelId">
-            <div class="flex justify-end gap-2">
-                <button type="button" id="cancelDelete" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">ยกเลิก</button>
-                <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">ยืนยัน</button>
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">ยืนยัน</button>
             </div>
         </form>
     </div>

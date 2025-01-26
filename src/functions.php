@@ -21,7 +21,7 @@ function getRoomsByHotelId($hotelId) {
             rt.room_type_name,
             rt.description,
             hr.price_per_night,
-            ri.image_url
+            ri.image_path
         FROM hotel_rooms hr
         JOIN room_types rt ON hr.room_type_id = rt.room_type_id
         LEFT JOIN room_images ri ON hr.hotel_room_id = ri.hotel_room_id
