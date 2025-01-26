@@ -107,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <!-- ตารางรายการโรงแรม -->
-    <div class="bg-white shadow-md rounded-lg p-6">
+    <div class="bg-white shadow-md rounded-lg p-6 ">
         <h2 class="text-xl font-bold mb-4">รายการโรงแรม</h2>
         <table class="table-auto w-full border-collapse">
             <thead>
@@ -126,19 +126,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <td class="border px-4 py-2"><?= htmlspecialchars($hotel['hotel_name']) ?></td>
                     <td class="border px-4 py-2"><?= htmlspecialchars($hotel['address']) ?></td>
                     <td class="border px-4 py-2"><?= htmlspecialchars($hotel['province_name']) ?></td>
-                    <td class="border px-4 py-2 text-center">
+                    <td class="border px-4 py-2 text-center flex gap-2 justify-center">
                         <!-- ปุ่มแก้ไข -->
-                        <button type="button" class="bg-blue-600 text-white px-4 py-2 rounded-lg edit-button" 
+                        <button type="button" class="bg-blue-600 text-white px-4 py-2 rounded-lg edit-button W-20" 
                             data-id="<?= $hotel['hotel_id'] ?>" 
                             data-name="<?= htmlspecialchars($hotel['hotel_name']) ?>" 
                             data-address="<?= htmlspecialchars($hotel['address']) ?>" 
-                            data-province-id="<?= $hotel['province_name'] ?>">แก้ไข</button>
+                            data-province-id="<?= $hotel['province_name'] ?>">Edit</button>
 
                         <!-- ปุ่มลบ -->
                         <form method="POST" class="inline-block delete-form">
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="hotel_id" value="<?= $hotel['hotel_id'] ?>">
-                            <button type="button" class="bg-red-600 text-white px-4 py-2 rounded-lg delete-button" data-id="<?= $hotel['hotel_id'] ?>">Delete</button>
+                            <button type="button" class="bg-red-600 text-white px-4 py-2 rounded-lg delete-button W-20" data-id="<?= $hotel['hotel_id'] ?>">Delete</button>
                         </form>
                     </td>
                 </tr>
@@ -148,6 +148,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </main>
 
+            <footer class="bg-white py-4 text-center text-black mt-8 shadow-md">
+                <p>&copy; 2025 Admin Dashboard</p>
+            </footer>
+
 <div id="editModal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
     <div class="bg-white shadow-lg rounded-lg w-full max-w-md p-6">
         <h3 class="text-xl font-bold mb-4">แก้ไขข้อมูลโรงแรม</h3>
@@ -155,15 +159,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="hidden" name="action" value="edit">
             <input type="hidden" name="hotel_id" id="editHotelId">
             <div class="mb-4">
-                <label for="editHotelName" class="block text-gray-700">ชื่อโรงแรม:</label>
+                <label for="editHotelName" class="block text-gray-700">ชื่อโรงแรม</label>
                 <input type="text" id="editHotelName" name="hotel_name" class="w-full border px-4 py-2 rounded-lg" required>
             </div>
             <div class="mb-4">
-                <label for="editAddress" class="block text-gray-700">ที่อยู่:</label>
+                <label for="editAddress" class="block text-gray-700">ที่อยู่</label>
                 <input type="text" id="editAddress" name="address" class="w-full border px-4 py-2 rounded-lg" required>
             </div>
             <div class="mb-4">
-                <label for="editProvince" class="block text-gray-700">จังหวัด:</label>
+                <label for="editProvince" class="block text-gray-700">จังหวัด</label>
                 <select id="editProvince" name="province_id" class="w-full border px-4 py-2 rounded-lg">
                     <?php foreach ($provinces as $province): ?>
                         <option value="<?= $province['province_id'] ?>"><?= $province['province_name'] ?></option>
@@ -227,3 +231,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </script>
 </body>
 </html>
+

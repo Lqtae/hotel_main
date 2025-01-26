@@ -1,15 +1,19 @@
-<?php //hotel_detail.php
+<?php 
 include 'db.php';  
 include 'functions.php'; 
 
 $id = $_GET['id'] ?? null;
 
 if ($id) {
+    // ดึงข้อมูลโรงแรม
     $hotelDetails = getHotelDetailsById($id);
     if (!$hotelDetails) {
         echo "ไม่พบข้อมูลโรงแรมนี้";
         exit;
     }
+
+    // ดึงข้อมูลประเภทห้องพัก
+    $roomDetails = getRoomsByHotelId($id);
 } else {
     echo "ไม่มี ID โรงแรมที่ถูกส่งมา";
     exit;
@@ -24,13 +28,12 @@ if ($id) {
     <title>Hotel Details</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100">
-
+<body class="bg-gray-100 flex flex-col min-h-screen">
 <header class="w-full bg-gray-100 py-6 shadow-md">
     <h1 class="text-black text-3xl font-bold text-center">Hotel Details</h1>
 </header>
 
-<main class="w-full max-w-4xl mx-auto mt-8 px-4">
+<main class="w-full max-w-4xl mx-auto mt-8 px-4 flex-grow">
     <div class="bg-white shadow-md rounded-lg p-6">
         <h2 class="text-xl font-semibold"><?= $hotelDetails['hotel_name'] ?? 'ไม่มีชื่อโรงแรม' ?></h2>
         <p class="text-gray-700">ที่อยู่: <?= $hotelDetails['address'] ?? 'ไม่มีที่อยู่' ?></p>
@@ -38,7 +41,41 @@ if ($id) {
         <p class="text-gray-700">ภาค: <?= $hotelDetails['region_name'] ?? 'ไม่มีภาค' ?></p>
         <p class="text-gray-700">รายละเอียด: <?= $hotelDetails['description'] ?? 'ไม่มีรายละเอียด' ?></p>
     </div>
+
+    <!-- ส่วนแสดงประเภทห้อง -->
+    <div class="mt-8">
+        <h3 class="text-2xl font-bold mb-4">ประเภทห้องพัก</h3>
+        <?php if (!empty($roomDetails)): ?>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <?php foreach ($roomDetails as $room): ?>
+                    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+                        <?php if (!empty($room['image_url'])): ?>
+                            <img src="<?= $room['image_url'] ?>" alt="<?= $room['room_type_name'] ?>" class="w-full h-48 object-cover">
+                        <?php else: ?>
+                            <div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500">
+                                ไม่มีรูปภาพ
+                            </div>
+                        <?php endif; ?>
+                        <div class="p-4">
+                            <h4 class="text-lg font-semibold"><?= $room['room_type_name'] ?></h4>
+                            <p class="text-gray-700"><?= $room['description'] ?></p>
+                            <p class="text-gray-900 font-bold mt-2">ราคา: <?= number_format($room['price_per_night'], 2) ?> บาท/คืน</p>
+                            <p class="text-gray-500"><?= $room['availability'] ? 'ว่าง' : 'ไม่ว่าง' ?></p>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <p class="text-gray-700">ไม่มีข้อมูลประเภทห้องพัก</p>
+        <?php endif; ?>
+    </div>
 </main>
 
+<footer class="w-full bg-white py-4 mt-8 shadow-md">
+    <p class="text-black text-center text-sm">
+        &copy; 2025 <a href="admin_dashboard.php" class="text-black hover:font-semibold">Where's Hotel</a>
+    </p>
+</footer>
 </body>
+
 </html>

@@ -12,4 +12,25 @@ function getHotelDetailsById($id) {
     $stmt->execute();
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
+
+function getRoomsByHotelId($hotelId) {
+    global $pdo;
+    $stmt = $pdo->prepare("
+        SELECT 
+            hr.hotel_room_id,
+            rt.room_type_name,
+            rt.description,
+            hr.price_per_night,
+            ri.image_url
+        FROM hotel_rooms hr
+        JOIN room_types rt ON hr.room_type_id = rt.room_type_id
+        LEFT JOIN room_images ri ON hr.hotel_room_id = ri.hotel_room_id
+        WHERE hr.hotel_id = :hotel_id
+    ");
+    $stmt->bindParam(':hotel_id', $hotelId, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+
 ?>
