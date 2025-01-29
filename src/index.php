@@ -23,14 +23,13 @@ $provinces = $provincesQuery->fetchAll(PDO::FETCH_ASSOC);
     <main class="flex-1 w-full max-w-4xl mx-auto mt-8 px-4">
     <div class="bg-white shadow-md rounded-lg p-6">
         <div class="flex items-center mb-4 gap-4">
-            <!-- ช่องค้นหา -->
+
             <div class="flex-grow">
                 <label for="search" class="block text-gray-700 text-sm font-medium">ค้นหา:</label>
                 <input type="text" id="search" placeholder="ค้นหาโรงแรมหรือจังหวัด" 
                        class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black">
             </div>
 
-            <!-- Dropdown ภาค -->
             <div>
                 <label for="region" class="block text-gray-700 text-sm font-medium">เลือกภาค:</label>
                 <select id="region" 
@@ -42,7 +41,6 @@ $provinces = $provincesQuery->fetchAll(PDO::FETCH_ASSOC);
                 </select>
             </div>
 
-            <!-- Dropdown จังหวัด -->
             <div>
                 <label for="province" class="block text-gray-700 text-sm font-medium">เลือกจังหวัด:</label>
                 <select id="province" 
@@ -50,19 +48,10 @@ $provinces = $provincesQuery->fetchAll(PDO::FETCH_ASSOC);
                     <option value="">-- เลือกจังหวัด --</option>
                 </select>
             </div>
-
-            <!-- ปุ่มค้นหา -->
-            <div>
-                <button id="searchBtn" 
-                        class="mt-6 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 focus:outline-none">ค้นหา</button>
-            </div>
         </div>
 
-        <!-- แสดงผลลัพธ์ -->
         <div id="results" class="mt-4 space-y-4">
-            <!-- แสดงโรงแรมเริ่มต้น -->
             <?php
-            // ดึงโรงแรมทั้งหมดเมื่อเปิดหน้าแรก
             $hotelsQuery = $pdo->query("SELECT hotels.*, provinces.province_name, regions.region_name 
                                         FROM hotels 
                                         JOIN provinces ON hotels.province_id = provinces.province_id
@@ -90,8 +79,6 @@ $provinces = $provincesQuery->fetchAll(PDO::FETCH_ASSOC);
 
 <script>
     const provincesByRegion = <?php echo json_encode($provinces); ?>;
-
-    // อัปเดตจังหวัดเมื่อเลือกภาค
     document.getElementById('region').addEventListener('change', function() {
         const region = this.value;
         const provinceSelect = document.getElementById('province');
@@ -110,15 +97,12 @@ $provinces = $provincesQuery->fetchAll(PDO::FETCH_ASSOC);
             provinceSelect.disabled = true;
         }
 
-        performSearch(); // เรียกค้นหาเมื่อเปลี่ยนภาค
+        performSearch();
     });
 
-    // กดค้นหาหรือพิมพ์ในช่องค้นหา
-    document.getElementById('searchBtn').addEventListener('click', performSearch);
     document.getElementById('search').addEventListener('input', performSearch);
     document.getElementById('province').addEventListener('change', performSearch);
 
-    // ฟังก์ชันค้นหา
     function performSearch() {
         const query = document.getElementById('search').value.trim();
         const region = document.getElementById('region').value;
@@ -128,7 +112,7 @@ $provinces = $provincesQuery->fetchAll(PDO::FETCH_ASSOC);
             .then(response => response.json())
             .then(data => {
                 const resultsContainer = document.getElementById('results');
-                resultsContainer.innerHTML = ''; // เคลียร์ผลลัพธ์เก่า
+                resultsContainer.innerHTML = '';
 
                 if (data.length > 0) {
                     data.forEach(item => {

@@ -34,6 +34,13 @@ if ($id) {
 </header>
 
 <main class="w-full max-w-4xl mx-auto mt-8 px-4 flex-grow">
+
+    <div class="absolute top-6 left-4">
+        <a href="javascript:history.back()" class="text-gray-700 font-bold text-lg px-4 py-2 rounded-lg hover:text-blue-600">
+            &lt; Back
+        </a>
+    </div>
+
     <div class="bg-white shadow-md rounded-lg p-6">
         <h2 class="text-xl font-semibold"><?= $hotelDetails['hotel_name'] ?? 'ไม่มีชื่อโรงแรม' ?></h2>
         <p class="text-gray-700">ที่อยู่: <?= $hotelDetails['address'] ?? 'ไม่มีที่อยู่' ?></p>
@@ -58,9 +65,8 @@ if ($id) {
                         <?php endif; ?>
                         <div class="p-4">
                             <h4 class="text-lg font-semibold"><?= $room['room_type_name'] ?></h4>
-                            <p class="text-gray-700"><?= $room['description'] ?></p>
-                            <p class="text-gray-900 font-bold mt-2">ราคา: <?= number_format($room['price_per_night'], 2) ?> บาท/คืน</p>
-                            <p class="text-gray-500"><?= $room['availability'] ? 'ว่าง' : 'ไม่ว่าง' ?></p>
+                            <p class="text-gray-700"><?= $room['room_description'] ?></p>
+                            <p class="text-gray-900 font-bold mt-2">ราคา: <?= number_format($room['room_price'], 2) ?> บาท/คืน</p>
                         </div>
                     </div>
                 <?php endforeach; ?>
