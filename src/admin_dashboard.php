@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $provinceId = $_POST['province_id'];
 
         $stmt = $pdo->prepare("
-            INSERT INTO hotels (hotel_name, address, province_id) 
+            INSERT INTO hotels (hotel_name, address, province_id)
             VALUES (:hotel_name, :address, :province_id)
         ");
         $stmt->execute([
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $roomPrice = $_POST['room_price'];
 
         $stmt = $pdo->prepare("
-            INSERT INTO hotel_rooms (hotel_id, room_type_id, room_name, room_description, room_price) 
+            INSERT INTO hotel_rooms (hotel_id, room_type_id, room_name, room_description, room_price)
             VALUES (:hotel_id, :room_type_id, :room_name, :room_description, :room_price)
         ");
         $stmt->execute([
@@ -73,8 +73,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $provinceId = $_POST['province_id'];
 
         $stmt = $pdo->prepare("
-            UPDATE hotels 
-            SET hotel_name = :hotel_name, address = :address, province_id = :province_id 
+            UPDATE hotels
+            SET hotel_name = :hotel_name, address = :address, province_id = :province_id
             WHERE hotel_id = :hotel_id
         ");
         $stmt->execute([
@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $roomTypeId = $_POST['room_type_id'];
         $roomDescription = $_POST['room_description'];
         $roomPrice = $_POST['room_price'];
-    
+
         $stmt = $pdo->prepare("
             UPDATE hotel_rooms
             SET room_name = :room_name, room_type_id = :room_type_id, room_description = :room_description, room_price = :room_price
@@ -206,10 +206,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- ส่วนค้นหา -->
     <div class="bg-white shadow-md rounded-lg p-6 mb-8">
     <h2 class="text-xl font-bold mb-4">ค้นหาโรงแรม</h2>
-    <input type="text" id="searchInput" placeholder="พิมพ์ชื่อโรงแรมเพื่อค้นหา..." 
+    <input type="text" id="searchInput" placeholder="พิมพ์ชื่อโรงแรมเพื่อค้นหา..."
            class="w-full border px-4 py-2 rounded-lg">
     </div>
-                            
+
     <!-- ตารางรายการโรงแรม -->
     <div class="bg-white shadow-md rounded-lg p-6 ">
     <h2 class="text-xl font-bold mb-4">รายการโรงแรม</h2>

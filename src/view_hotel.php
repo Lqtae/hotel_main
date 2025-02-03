@@ -7,7 +7,6 @@ if (!isset($_GET['id'])) {
 
 $hotel_id = $_GET['id'];
 
-// ดึงข้อมูลโรงแรม
 $stmt = $pdo->prepare("
     SELECT hotels.hotel_name, hotels.address, provinces.province_name
     FROM hotels
@@ -21,7 +20,6 @@ if (!$hotel) {
     die("ไม่พบข้อมูลโรงแรม");
 }
 
-// ดึงข้อมูลห้องพัก
 $stmt = $pdo->prepare("
     SELECT room_name, room_description, room_price 
     FROM hotel_rooms
@@ -41,20 +39,17 @@ $rooms = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
 
-    <!-- Header -->
     <header class="w-full bg-gray-100 py-6 shadow-md">
-        <h1 class="text-3xl font-bold text-center">Admin Dashboard</h1>
+        <h1 class="text-3xl font-bold text-center">View</h1>
     </header>
 
     <main class="flex-grow">
-        <!-- ปุ่มย้อนกลับ -->
         <div class="absolute top-6 left-4">
             <a href="javascript:history.back()" class="text-gray-700 font-bold text-lg px-4 py-2 rounded-lg hover:text-blue-600">
                 &lt; Back
             </a>
         </div>
 
-        <!-- ข้อมูลโรงแรม -->
         <div class="max-w-4xl mx-auto mt-8 p-6 bg-white shadow-md rounded-lg">
             <h1 class="text-2xl font-bold mb-4"><?= htmlspecialchars($hotel['hotel_name']) ?></h1>
             <p><strong>ที่อยู่:</strong> <?= htmlspecialchars($hotel['address']) ?></p>
@@ -87,7 +82,6 @@ $rooms = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </main>
 
-    <!-- Footer (ล่างสุด) -->
     <footer class="w-full bg-white py-4 shadow-md">
         <p class="text-black text-center text-sm">
             &copy; 2025 <a href="index.php" class="text-black hover:font-semibold">Where's Hotel</a>

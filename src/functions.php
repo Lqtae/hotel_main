@@ -18,7 +18,7 @@ function getRoomsByHotelId($hotelId) {
     $stmt = $pdo->prepare("
         SELECT 
             hr.hotel_room_id,
-            rt.room_type_name,
+            hr.room_name,
             hr.room_description,
             hr.room_price,
             ri.image_path
@@ -30,6 +30,26 @@ function getRoomsByHotelId($hotelId) {
     $stmt->bindParam(':hotel_id', $hotelId, PDO::PARAM_INT);
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function getRoomImagesByRoomId($roomId) {
+    global $pdo; 
+    $stmt = $pdo->prepare("SELECT image_path FROM room_images WHERE hotel_room_id = :room_id");
+    $stmt->execute(['room_id' => $roomId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function getRoomDetailsById($room_id) {
+    global $pdo;
+    $stmt = $pdo->prepare("
+        SELECT r.room_id, r.room_type_name, r.room_description, r.room_price, r.image_url, 
+               h.hotel_id, h.hotel_name
+        FROM hotel_rooms r
+        JOIN hotels h ON r.hotel_id = h.hotel_id
+        WHERE r.room_id = :room_id
+    ");
+    $stmt->execute([':room_id' => $room_id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
 
