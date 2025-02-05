@@ -1,4 +1,4 @@
-<?php 
+<?php //view_hotel.php
 require 'db.php';
 
 if (!isset($_GET['id'])) {
@@ -21,12 +21,22 @@ if (!$hotel) {
 }
 
 $stmt = $pdo->prepare("
-    SELECT room_name, room_description, room_price 
-    FROM hotel_rooms
-    WHERE hotel_id = :hotel_id
+    SELECT hr.hotel_room_id, hr.room_name, hr.room_description, hr.room_price 
+    FROM hotel_rooms hr
+    WHERE hr.hotel_id = :hotel_id
 ");
 $stmt->execute([':hotel_id' => $hotel_id]);
 $rooms = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// ดึงรูปภาพของแต่ละห้อง
+$room_images = [];
+foreach ($rooms as $room) {
+    $stmt = $pdo->prepare("
+        SELECT image_path FROM room_images WHERE hotel_room_id = :hotel_room_id
+    ");
+    $stmt->execute([':hotel_room_id' => $room['hotel_room_id']]);
+    $room_images[$room['hotel_room_id']] = $stmt->fetchAll(PDO::FETCH_COLUMN);
+}
 ?>
 
 <!DOCTYPE html>
@@ -55,30 +65,31 @@ $rooms = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <p><strong>ที่อยู่:</strong> <?= htmlspecialchars($hotel['address']) ?></p>
             <p><strong>จังหวัด:</strong> <?= htmlspecialchars($hotel['province_name']) ?></p>
 
-            <h2 class="text-xl font-bold mt-6 mb-2">ห้องพัก</h2>
-            <table class="w-full border-collapse border border-gray-300">
-                <thead>
-                    <tr class="bg-gray-200">
-                        <th class="border px-4 py-2">ชื่อห้อง</th>
-                        <th class="border px-4 py-2">รายละเอียด</th>
-                        <th class="border px-4 py-2">ราคา</th>
-                    </tr>
-                </thead>
-                <tbody>
+            <h2 class="text-xl font-bold mt-6 mb-4">ห้องพัก</h2>
+
+            <?php if (!empty($rooms)): ?>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <?php foreach ($rooms as $room): ?>
-                        <tr class="hover:bg-gray-100">
-                            <td class="border px-4 py-2"><?= htmlspecialchars($room['room_name']) ?></td>
-                            <td class="border px-4 py-2"><?= htmlspecialchars($room['room_description']) ?></td>
-                            <td class="border px-4 py-2"><?= number_format($room['room_price'], 2) ?> บาท</td>
-                        </tr>
+                        <a href="edit_room.php?id=<?= $room['hotel_room_id'] ?>" class="block bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300">
+                            <?php if (!empty($room_images[$room['hotel_room_id']])): ?>
+                                <img src="<?= htmlspecialchars($room_images[$room['hotel_room_id']][0]) ?>" alt="Room Image" class="w-full h-40 object-cover">
+                            <?php else: ?>
+                                <div class="w-full h-40 bg-gray-200 flex items-center justify-center">
+                                    <span class="text-gray-500">ไม่มีรูปภาพ</span>
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="p-4">
+                                <h3 class="text-lg font-bold"><?= htmlspecialchars($room['room_name']) ?></h3>
+                                <p class="text-gray-600 text-sm mb-2"><?= htmlspecialchars($room['room_description']) ?></p>
+                                <p class="text-gray-800 font-semibold"><?= number_format($room['room_price'], 2) ?> บาท</p>
+                            </div>
+                        </a>
                     <?php endforeach; ?>
-                    <?php if (empty($rooms)): ?>
-                        <tr>
-                            <td colspan="3" class="border px-4 py-2 text-center text-gray-500">ไม่มีข้อมูลห้องพัก</td>
-                        </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                </div>
+            <?php else: ?>
+                <p class="text-gray-500 text-center">ไม่มีข้อมูลห้องพัก</p>
+            <?php endif; ?>
         </div>
     </main>
 

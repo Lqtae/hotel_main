@@ -1,4 +1,4 @@
-<?php
+<?php //admin_dashboard.php
 // เชื่อมต่อฐานข้อมูล
 require 'db.php';
 
@@ -38,13 +38,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: admin_dashboard.php');
         exit;
     } elseif ($_POST['action'] === 'add_room') {
-        // เพิ่มห้อง
         $hotelId = $_POST['hotel_id'];
         $roomTypeId = $_POST['room_type_id'];
         $roomName = $_POST['room_name'];
         $roomDescription = $_POST['room_description'];
         $roomPrice = $_POST['room_price'];
-
+    
+        // เพิ่มข้อมูลห้องพักลงในตาราง hotel_rooms ก่อน
         $stmt = $pdo->prepare("
             INSERT INTO hotel_rooms (hotel_id, room_type_id, room_name, room_description, room_price)
             VALUES (:hotel_id, :room_type_id, :room_name, :room_description, :room_price)
@@ -56,8 +56,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':room_description' => $roomDescription,
             ':room_price' => $roomPrice,
         ]);
-        header('Location: admin_dashboard.php');
-        exit;
+    
+        // ดึงค่า room_id ที่เพิ่มล่าสุด
+        $roomId = $pdo->lastInsertId();
+    
+        // ตรวจสอบว่าอัปโหลดไฟล์หรือไม่
+        if (!empty($_FILES['room_image']['name'])) {
+            $targetDir = __DIR__ . "/../src/img/"; // โฟลเดอร์ที่เก็บไฟล์
+            $originalFileName = $_FILES['room_image']['name']; // ชื่อไฟล์เดิม
+            $targetFilePath = $targetDir . $originalFileName;
+            $imagePath = "/hotel_main/src/img/" . $originalFileName; // เก็บลง Database
+
+            // อัปโหลดไฟล์
+            if (move_uploaded_file($_FILES['room_image']['tmp_name'], $targetFilePath)) {
+                // บันทึกลง Database
+                $sql = "INSERT INTO room_images (hotel_room_id, image_path) VALUES (:hotel_room_id, :image_path)";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([
+                    ':hotel_room_id' => $roomId, 
+                    ':image_path' => $imagePath
+                ]);
+                header('Location: admin_dashboard.php');
+                exit;
+            } else {
+                echo "เกิดข้อผิดพลาดในการอัปโหลดไฟล์";
+            }
+        } else {
+            echo "กรุณาเลือกไฟล์รูปภาพ";
+        }  
     } elseif ($_POST['action'] === 'delete') {
         // ลบโรงแรม
         $hotelId = $_POST['hotel_id'];
@@ -86,16 +112,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: admin_dashboard.php');
         exit;
     } elseif ($_POST['action'] === 'edit_room') {
-        // แก้ไขข้อมูลห้องพัก
         $roomId = $_POST['room_id'];
         $roomName = $_POST['room_name'];
         $roomTypeId = $_POST['room_type_id'];
         $roomDescription = $_POST['room_description'];
         $roomPrice = $_POST['room_price'];
-
+        $roomImage = $_POST['old_room_image']; // ค่ารูปเดิม
+    
+        if (!empty($_FILES['room_image']['name'])) {
+            $uploadDir = '/hotel_main/src/img/';
+            $fileTmpPath = $_FILES['room_image']['tmp_name'];
+            $fileName = time() . '_' . basename($_FILES['room_image']['name']);
+            $uploadPath = $uploadDir . $fileName;
+    
+            if (move_uploaded_file($fileTmpPath, __DIR__ . $uploadPath)) {
+                $roomImage = $fileName;
+            }
+        }
+    
         $stmt = $pdo->prepare("
             UPDATE hotel_rooms
-            SET room_name = :room_name, room_type_id = :room_type_id, room_description = :room_description, room_price = :room_price
+            SET room_name = :room_name, room_type_id = :room_type_id, room_description = :room_description,
+                room_price = :room_price, room_image = :room_image
             WHERE room_id = :room_id
         ");
         $stmt->execute([
@@ -103,11 +141,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':room_type_id' => $roomTypeId,
             ':room_description' => $roomDescription,
             ':room_price' => $roomPrice,
+            ':room_image' => $roomImage,
             ':room_id' => $roomId,
         ]);
         header('Location: admin_dashboard.php');
         exit;
-    }
+    }    
 }
 ?>
 
@@ -165,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- ส่วนเพิ่มข้อมูลห้อง -->
     <div class="bg-white shadow-md rounded-lg p-6 mb-8">
         <h2 class="text-xl font-bold mb-4">เพิ่มข้อมูลห้อง</h2>
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             <input type="hidden" name="action" value="add_room">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -195,6 +234,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div>
                     <label for="roomPrice" class="block text-gray-700">ราคา:</label>
                     <input type="number" id="roomPrice" name="room_price" class="w-full border px-4 py-2 rounded-lg" required>
+                </div>
+                <div>
+                    <label for="roomImage" class="block text-gray-700">รูปภาพห้อง:</label>
+                    <input type="file" id="roomImage" name="room_image" class="w-full border px-4 py-2 rounded-lg" accept="image/*" required>
                 </div>
             </div>
             <div class="mt-4 flex justify-end">

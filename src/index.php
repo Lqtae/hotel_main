@@ -21,7 +21,13 @@ $provinces = $provincesQuery->fetchAll(PDO::FETCH_ASSOC);
     </header>
 
     <main class="flex-1 w-full max-w-4xl mx-auto mt-8 px-4">
-    <div class="bg-white shadow-md rounded-lg p-6">
+        <div class="absolute top-6 right-4">
+            <a href="admin_dashboard.php" class="text-gray-700 font-bold text-lg px-4 py-2 rounded-lg hover:text-blue-600">
+                Admin Dashboard
+            </a>
+        </div>
+
+        <div class="bg-white shadow-md rounded-lg p-6">
         <div class="flex items-center mb-4 gap-4">
 
             <div class="flex-grow">
