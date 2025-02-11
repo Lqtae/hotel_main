@@ -61,53 +61,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: admin_dashboard.php');
         exit;
 
-    } elseif ($_POST['action'] === 'add_room') {
-        $hotelId = $_POST['hotel_id'];
-        $roomTypeId = $_POST['room_type_id'];
-        $roomName = $_POST['room_name'];
-        $roomDescription = $_POST['room_description'];
-        $roomPrice = $_POST['room_price'];
-    
-        // เพิ่มข้อมูลห้องพักลงในตาราง hotel_rooms ก่อน
-        $stmt = $pdo->prepare("
-            INSERT INTO hotel_rooms (hotel_id, room_type_id, room_name, room_description, room_price)
-            VALUES (:hotel_id, :room_type_id, :room_name, :room_description, :room_price)
-        ");
-        $stmt->execute([
-            ':hotel_id' => $hotelId,
-            ':room_type_id' => $roomTypeId,
-            ':room_name' => $roomName,
-            ':room_description' => $roomDescription,
-            ':room_price' => $roomPrice,
-        ]);
-    
-        // ดึงค่า room_id ที่เพิ่มล่าสุด
-        $roomId = $pdo->lastInsertId();
-    
-        // ตรวจสอบว่าอัปโหลดไฟล์หรือไม่
-        if (!empty($_FILES['room_image']['name'])) {
-            $targetDir = __DIR__ . "/../src/img/room_img/"; // โฟลเดอร์ที่เก็บไฟล์
-            $originalFileName = $_FILES['room_image']['name']; // ชื่อไฟล์เดิม
-            $targetFilePath = $targetDir . $originalFileName;
-            $imagePath = "/hotel_main/src/img/room_img/" . $originalFileName; // เก็บลง Database
-
-            // อัปโหลดไฟล์
-            if (move_uploaded_file($_FILES['room_image']['tmp_name'], $targetFilePath)) {
-                // บันทึกลง Database
-                $sql = "INSERT INTO room_images (hotel_room_id, image_path) VALUES (:hotel_room_id, :image_path)";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([
-                    ':hotel_room_id' => $roomId, 
-                    ':image_path' => $imagePath
-                ]);
-                
-            } else {
-                echo "เกิดข้อผิดพลาดในการอัปโหลดไฟล์";
-            }
-        }
-            header('Location: admin_dashboard.php');
-            exit;
-
     } elseif ($_POST['action'] === 'delete') {
         // ลบโรงแรม
         $hotelId = $_POST['hotel_id'];
@@ -132,9 +85,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <header class="w-full bg-gray-100 py-6 shadow-md">
     <h1 class="text-3xl font-bold text-center">Admin Dashboard</h1>
-</header>
-
-<main class="w-full max-w-4xl mx-auto mt-8 px-4">
 
     <div class="absolute top-6 left-4">
             <a href="javascript:history.back()" class="text-gray-700 font-bold text-lg px-4 py-2 rounded-lg hover:text-blue-600">
@@ -147,6 +97,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 index
             </a>
     </div>
+</header>
+
+<main class="w-full max-w-4xl mx-auto mt-8 px-4">
+
+    
+
+    
 
     <!-- ส่วนเพิ่มข้อมูลโรงแรม -->
     <div class="bg-white shadow-md rounded-lg p-6 mb-8">
@@ -178,52 +135,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
                 <div class="mt-4 flex justify-end">
                 <button type="submit" class="bg-green-600 border-2 border-green-600 text-white px-4 py-2 rounded-lg hover:bg-transparent hover:text-green-600">เพิ่มโรงแรม</button>
-                </div>
-        </form>
-    </div>
-
-    <!-- ส่วนเพิ่มข้อมูลห้อง -->
-    <div class="bg-white shadow-md rounded-lg p-6 mb-8">
-        <h2 class="text-xl font-bold mb-4">เพิ่มข้อมูลห้อง</h2>
-        <form method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="action" value="add_room">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="hotel" class="block text-gray-700">โรงแรม:</label>
-                    <select id="hotel" name="hotel_id" class="w-full border px-4 py-2 rounded-lg">
-                        <?php foreach ($hotels as $hotel): ?>
-                            <option value="<?= $hotel['hotel_id'] ?>"><?= $hotel['hotel_name'] ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div>
-                    <label for="roomType" class="block text-gray-700">ประเภทห้อง:</label>
-                    <select id="roomType" name="room_type_id" class="w-full border px-4 py-2 rounded-lg">
-                        <?php foreach ($roomTypes as $roomType): ?>
-                            <option value="<?= $roomType['room_type_id'] ?>"><?= $roomType['room_type_name'] ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div>
-                    <label for="roomName" class="block text-gray-700">ชื่อห้อง:</label>
-                    <input type="text" id="roomName" name="room_name" class="w-full border px-4 py-2 rounded-lg" required>
-                </div>
-                <div>
-                    <label for="roomPrice" class="block text-gray-700">ราคา:</label>
-                    <input type="number" id="roomPrice" name="room_price" class="w-full border px-4 py-2 rounded-lg" required>
-                </div>
-                <div>
-                    <label for="roomDescription" class="block text-gray-700">รายละเอียด:</label>
-                    <textarea id="roomDescription" name="room_description" class="w-full h-12 border px-4 py-2 rounded-lg" required></textarea>
-                </div>
-                <div>
-                    <label for="roomImage" class="block text-gray-700">รูปภาพห้อง:</label>
-                    <input type="file" id="roomImage" name="room_image" class="w-full border px-4 py-2 rounded-lg" accept="image/*" required>
-                    <img id="roomImagePreview" class="mt-2 hidden w-32 h-32 object-cover border rounded-lg" />
-                </div>
-            </div>
-                <div class="mt-4 flex justify-end">
-                    <button type="submit" class="bg-green-600 border-green-600 border-2 text-white px-4 py-2 rounded-lg hover:bg-transparent hover:text-green-600">เพิ่มห้อง</button>
                 </div>
         </form>
     </div>
@@ -276,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </main>
 
-    <footer class="w-full bg-white py-4 mt-8 shadow-md">
+    <footer class="w-full bg-white py-4 mt-8 shadow-md fixed bottom-0">
                 <p class="text-black text-center text-sm">
                     &copy; 2025 <a href="index.php" class="text-black hover:font-semibold">Where's Hotel</a>
                 </p>
