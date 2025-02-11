@@ -1,16 +1,23 @@
 <?php //functions.php
-function getHotelDetailsById($id) {
+function getHotelDetailsById($hotelId) {
     global $pdo;
     $stmt = $pdo->prepare("
-        SELECT hotels.hotel_name, hotels.address, provinces.province_name, regions.region_name
-        FROM hotels
-        LEFT JOIN provinces ON hotels.province_id = provinces.province_id
-        LEFT JOIN regions ON provinces.region_id = regions.region_id
-        WHERE hotels.hotel_id = :id
+        SELECT h.*, p.province_name
+        FROM hotels h
+        LEFT JOIN provinces p ON h.province_id = p.province_id
+        WHERE h.hotel_id = :hotel_id
     ");
-    $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-    $stmt->execute();
-    return $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt->execute([':hotel_id' => $hotelId]);
+    $hotel = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($hotel) {
+        // ดึงรูปภาพของโรงแรมจาก hotel_images
+        $stmt = $pdo->prepare("SELECT image_path FROM hotel_images WHERE hotel_id = :hotel_id");
+        $stmt->execute([':hotel_id' => $hotelId]);
+        $hotel['images'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    return $hotel;
 }
 
 function getRoomsByHotelId($hotelId) {
@@ -74,5 +81,49 @@ function getRoomDetailsById($room_id) {
     }
 
     return $room;
+}
+
+function uploadHotelImage($hotelId, $file) {
+    global $pdo;
+    
+    if (!$hotelId || !is_numeric($hotelId)) {
+        return ['success' => false, 'error' => 'Hotel ID ไม่ถูกต้อง'];
+    }
+
+    $uploadDir = '/hotel_main/src/img/hotel_img/';
+    $fileName = basename($file['name']);
+    $filePath = $uploadDir . $fileName;
+    $allowedTypes = ['image/jpeg', 'image/png'];
+
+    if (!in_array($file['type'], $allowedTypes)) {
+        return ['success' => false, 'error' => 'ประเภทไฟล์ไม่รองรับ'];
+    }
+
+    if (move_uploaded_file($file['tmp_name'], $_SERVER['DOCUMENT_ROOT'] . $filePath)) {
+        $stmt = $pdo->prepare("INSERT INTO hotel_images (hotel_id, image_path) VALUES (?, ?)");
+        $stmt->execute([$hotelId, $filePath]);
+
+        return ['success' => true, 'image_id' => $pdo->lastInsertId(), 'image_path' => $filePath];
+    } else {
+        return ['success' => false, 'error' => 'อัปโหลดล้มเหลว'];
+    }
+}
+
+// ฟังก์ชันลบรูปภาพ
+function deleteHotelImage($imageId) {
+    global $pdo;
+
+    $stmt = $pdo->prepare("SELECT image_path FROM hotel_images WHERE image_id = ?");
+    $stmt->execute([$imageId]);
+    $image = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($image) {
+        unlink($_SERVER['DOCUMENT_ROOT'] . $image['image_path']);
+        $stmt = $pdo->prepare("DELETE FROM hotel_images WHERE image_id = ?");
+        $stmt->execute([$imageId]);
+        return ['success' => true];
+    } else {
+        return ['success' => false, 'error' => 'ไม่พบรูปภาพ'];
+    }
 }
 ?>

@@ -12,8 +12,9 @@ $provinces = $provincesQuery->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Hotel Search</title>
+    <title>Where's Hotel</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" href="./img/icon.png">
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
 <header class="w-full bg-gray-100 py-6 shadow-md">

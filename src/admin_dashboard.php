@@ -35,8 +35,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':address' => $address,
             ':province_id' => $provinceId,
         ]);
+
+        $hotelId = $pdo->lastInsertId();
+
+        if (!empty($_FILES['hotel_image']['name'])) {
+            $targetDir = __DIR__ . "/../src/img/hotel_img/"; // โฟลเดอร์เก็บรูปภาพ
+            $originalFileName = $_FILES['hotel_image']['name']; // ชื่อไฟล์เดิม
+            $targetFilePath = $targetDir . $originalFileName;
+            $imagePath = "/hotel_main/src/img/hotel_img/" . $originalFileName; // พาธเก็บใน Database
+    
+            // อัปโหลดไฟล์
+            if (move_uploaded_file($_FILES['hotel_image']['tmp_name'], $targetFilePath)) {
+                // บันทึกลง Database
+                $sql = "INSERT INTO hotel_images (hotel_id, image_path) VALUES (:hotel_id, :image_path)";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([
+                    ':hotel_id' => $hotelId,
+                    ':image_path' => $imagePath
+                ]);
+            } else {
+                echo "เกิดข้อผิดพลาดในการอัปโหลดไฟล์";
+            }
+        } 
+
         header('Location: admin_dashboard.php');
         exit;
+
     } elseif ($_POST['action'] === 'add_room') {
         $hotelId = $_POST['hotel_id'];
         $roomTypeId = $_POST['room_type_id'];
@@ -62,10 +86,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
         // ตรวจสอบว่าอัปโหลดไฟล์หรือไม่
         if (!empty($_FILES['room_image']['name'])) {
-            $targetDir = __DIR__ . "/../src/img/"; // โฟลเดอร์ที่เก็บไฟล์
+            $targetDir = __DIR__ . "/../src/img/room_img/"; // โฟลเดอร์ที่เก็บไฟล์
             $originalFileName = $_FILES['room_image']['name']; // ชื่อไฟล์เดิม
             $targetFilePath = $targetDir . $originalFileName;
-            $imagePath = "/hotel_main/src/img/" . $originalFileName; // เก็บลง Database
+            $imagePath = "/hotel_main/src/img/room_img/" . $originalFileName; // เก็บลง Database
 
             // อัปโหลดไฟล์
             if (move_uploaded_file($_FILES['room_image']['tmp_name'], $targetFilePath)) {
@@ -76,14 +100,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':hotel_room_id' => $roomId, 
                     ':image_path' => $imagePath
                 ]);
-                header('Location: admin_dashboard.php');
-                exit;
+                
             } else {
                 echo "เกิดข้อผิดพลาดในการอัปโหลดไฟล์";
             }
-        } else {
-            echo "กรุณาเลือกไฟล์รูปภาพ";
-        }  
+        }
+            header('Location: admin_dashboard.php');
+            exit;
+
     } elseif ($_POST['action'] === 'delete') {
         // ลบโรงแรม
         $hotelId = $_POST['hotel_id'];
@@ -91,62 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([':hotel_id' => $hotelId]);
         header('Location: admin_dashboard.php');
         exit;
-    } elseif ($_POST['action'] === 'edit') {
-        // แก้ไขข้อมูลโรงแรม
-        $hotelId = $_POST['hotel_id'];
-        $hotelName = $_POST['hotel_name'];
-        $address = $_POST['address'];
-        $provinceId = $_POST['province_id'];
-
-        $stmt = $pdo->prepare("
-            UPDATE hotels
-            SET hotel_name = :hotel_name, address = :address, province_id = :province_id
-            WHERE hotel_id = :hotel_id
-        ");
-        $stmt->execute([
-            ':hotel_name' => $hotelName,
-            ':address' => $address,
-            ':province_id' => $provinceId,
-            ':hotel_id' => $hotelId,
-        ]);
-        header('Location: admin_dashboard.php');
-        exit;
-    } elseif ($_POST['action'] === 'edit_room') {
-        $roomId = $_POST['room_id'];
-        $roomName = $_POST['room_name'];
-        $roomTypeId = $_POST['room_type_id'];
-        $roomDescription = $_POST['room_description'];
-        $roomPrice = $_POST['room_price'];
-        $roomImage = $_POST['old_room_image']; // ค่ารูปเดิม
-    
-        if (!empty($_FILES['room_image']['name'])) {
-            $uploadDir = '/hotel_main/src/img/';
-            $fileTmpPath = $_FILES['room_image']['tmp_name'];
-            $fileName = time() . '_' . basename($_FILES['room_image']['name']);
-            $uploadPath = $uploadDir . $fileName;
-    
-            if (move_uploaded_file($fileTmpPath, __DIR__ . $uploadPath)) {
-                $roomImage = $fileName;
-            }
-        }
-    
-        $stmt = $pdo->prepare("
-            UPDATE hotel_rooms
-            SET room_name = :room_name, room_type_id = :room_type_id, room_description = :room_description,
-                room_price = :room_price, room_image = :room_image
-            WHERE room_id = :room_id
-        ");
-        $stmt->execute([
-            ':room_name' => $roomName,
-            ':room_type_id' => $roomTypeId,
-            ':room_description' => $roomDescription,
-            ':room_price' => $roomPrice,
-            ':room_image' => $roomImage,
-            ':room_id' => $roomId,
-        ]);
-        header('Location: admin_dashboard.php');
-        exit;
-    }    
+    }     
 }
 ?>
 
@@ -157,6 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" href="./img/icon.png">
 </head>
 <body class="bg-gray-100">
 
@@ -172,10 +142,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </a>
     </div>
 
+    <div class="absolute top-6 right-4">
+            <a href="index.php" class="text-gray-700 font-bold text-lg px-4 py-2 rounded-lg hover:text-blue-600">
+                index
+            </a>
+    </div>
+
     <!-- ส่วนเพิ่มข้อมูลโรงแรม -->
     <div class="bg-white shadow-md rounded-lg p-6 mb-8">
         <h2 class="text-xl font-bold mb-4">เพิ่มข้อมูลโรงแรม</h2>
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             <input type="hidden" name="action" value="add_hotel">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -194,10 +170,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <?php endforeach; ?>
                     </select>
                 </div>
+                <div>
+                    <label for="hotelImage" class="block text-gray-700">เลือกรูปภาพ:</label>
+                    <input type="file" id="hotelImage" name="hotel_image" class="w-full border px-4 py-2 rounded-lg" accept="image/*" required>
+                    <img id="hotelImagePreview" class="mt-2 hidden w-32 h-32 object-cover border rounded-lg" />
+                </div>
             </div>
-            <div class="mt-4 flex justify-end">
-                <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg">เพิ่มโรงแรม</button>
-            </div>
+                <div class="mt-4 flex justify-end">
+                <button type="submit" class="bg-green-600 border-2 border-green-600 text-white px-4 py-2 rounded-lg hover:bg-transparent hover:text-green-600">เพิ่มโรงแรม</button>
+                </div>
         </form>
     </div>
 
@@ -228,21 +209,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="text" id="roomName" name="room_name" class="w-full border px-4 py-2 rounded-lg" required>
                 </div>
                 <div>
-                    <label for="roomDescription" class="block text-gray-700">รายละเอียด:</label>
-                    <textarea id="roomDescription" name="room_description" class="w-full border px-4 py-2 rounded-lg" required></textarea>
-                </div>
-                <div>
                     <label for="roomPrice" class="block text-gray-700">ราคา:</label>
                     <input type="number" id="roomPrice" name="room_price" class="w-full border px-4 py-2 rounded-lg" required>
                 </div>
                 <div>
+                    <label for="roomDescription" class="block text-gray-700">รายละเอียด:</label>
+                    <textarea id="roomDescription" name="room_description" class="w-full h-12 border px-4 py-2 rounded-lg" required></textarea>
+                </div>
+                <div>
                     <label for="roomImage" class="block text-gray-700">รูปภาพห้อง:</label>
                     <input type="file" id="roomImage" name="room_image" class="w-full border px-4 py-2 rounded-lg" accept="image/*" required>
+                    <img id="roomImagePreview" class="mt-2 hidden w-32 h-32 object-cover border rounded-lg" />
                 </div>
             </div>
-            <div class="mt-4 flex justify-end">
-                <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg">เพิ่มห้อง</button>
-            </div>
+                <div class="mt-4 flex justify-end">
+                    <button type="submit" class="bg-green-600 border-green-600 border-2 text-white px-4 py-2 rounded-lg hover:bg-transparent hover:text-green-600">เพิ่มห้อง</button>
+                </div>
         </form>
     </div>
 
@@ -273,21 +255,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <td class="border px-4 py-2"><?= htmlspecialchars($hotel['province_name']) ?></td>
                     <td class="border px-4 py-2 text-center flex gap-2 justify-center">
                         <!-- ปุ่มดูรายละเอียด -->
-                        <a href="view_hotel.php?id=<?= $hotel['hotel_id'] ?>" class="bg-blue-600 text-white px-4 py-2 rounded-lg">
+                        <a href="view_hotel.php?id=<?= $hotel['hotel_id'] ?>" class="bg-blue-600 border-blue-600 border-2 text-white px-4 py-2 rounded-lg hover:bg-transparent hover:text-blue-600">
                             View
                         </a>
-                        <!-- ปุ่มแก้ไข -->
-                        <button type="button" class="bg-green-600 text-white px-4 py-2 rounded-lg edit-button"
-                            data-id="<?= $hotel['hotel_id'] ?>"
-                            data-name="<?= htmlspecialchars($hotel['hotel_name']) ?>"
-                            data-province-id="<?= $hotel['province_name'] ?>">
-                            Edit
-                        </button>
+                        
+
                         <!-- ปุ่มลบ -->
                         <form method="POST" class="inline-block delete-form">
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="hotel_id" value="<?= $hotel['hotel_id'] ?>">
-                            <button type="button" class="bg-red-600 text-white px-4 py-2 rounded-lg delete-button">
+                            <button type="button" class="bg-red-600 border-2 border-red-600 text-white px-4 py-2 rounded-lg delete-button hover:bg-transparent hover:text-red-600">
                                 Delete
                             </button>
                         </form>
@@ -305,102 +282,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </p>
     </footer>
 
-<div id="editModal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
-    <div class="bg-white shadow-lg rounded-lg w-full max-w-md p-6">
-        <h3 class="text-xl font-bold mb-4">แก้ไขข้อมูลโรงแรม</h3>
-        <form method="POST">
-            <input type="hidden" name="action" value="edit">
-            <input type="hidden" name="hotel_id" id="editHotelId">
-            <div class="mb-4">
-                <label for="editHotelName" class="block text-gray-700">ชื่อโรงแรม</label>
-                <input type="text" id="editHotelName" name="hotel_name" class="w-full border px-4 py-2 rounded-lg" required>
-            </div>
-            <div class="mb-4">
-                <label for="editProvince" class="block text-gray-700">จังหวัด</label>
-                <select id="editProvince" name="province_id" class="w-full border px-4 py-2 rounded-lg">
-                    <?php foreach ($provinces as $province): ?>
-                        <option value="<?= $province['province_id'] ?>"><?= $province['province_name'] ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="flex justify-end gap-2">
-                <button type="button" id="cancelEdit" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">ยกเลิก</button>
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">ยืนยัน</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Modal สำหรับแก้ไขข้อมูลห้องพัก -->
-<div id="editRoomModal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
-    <div class="bg-white shadow-lg rounded-lg w-full max-w-md p-6">
-        <h3 class="text-xl font-bold mb-4">แก้ไขข้อมูลห้องพัก</h3>
-        <form method="POST">
-            <input type="hidden" name="action" value="edit_room">
-            <input type="hidden" name="room_id" id="editRoomId">
-            <div class="mb-4">
-                <label for="editRoomName" class="block text-gray-700">ชื่อห้อง:</label>
-                <input type="text" id="editRoomName" name="room_name" class="w-full border px-4 py-2 rounded-lg" required>
-            </div>
-            <div class="mb-4">
-                <label for="editRoomType" class="block text-gray-700">ประเภทห้อง:</label>
-                <select id="editRoomType" name="room_type_id" class="w-full border px-4 py-2 rounded-lg">
-                    <?php foreach ($roomTypes as $roomType): ?>
-                        <option value="<?= $roomType['room_type_id'] ?>"><?= $roomType['room_type_name'] ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="mb-4">
-                <label for="editRoomDescription" class="block text-gray-700">รายละเอียด:</label>
-                <textarea id="editRoomDescription" name="room_description" class="w-full border px-4 py-2 rounded-lg"></textarea>
-            </div>
-            <div class="mb-4">
-                <label for="editRoomPrice" class="block text-gray-700">ราคา:</label>
-                <input type="number" id="editRoomPrice" name="room_price" class="w-full border px-4 py-2 rounded-lg" required>
-            </div>
-            <div class="flex justify-end gap-2">
-                <button type="button" id="cancelEditRoom" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">ยกเลิก</button>
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">บันทึก</button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <script>
-    // เปิด Modal สำหรับแก้ไขโรงแรม
-    const editModal = document.getElementById('editModal');
-    const editButtons = document.querySelectorAll('.edit-button');
-    const cancelEdit = document.getElementById('cancelEdit');
-    editButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            document.getElementById('editHotelId').value = button.getAttribute('data-id');
-            document.getElementById('editHotelName').value = button.getAttribute('data-name');
-            document.getElementById('editProvince').value = button.getAttribute('data-province-id');
-            editModal.classList.remove('hidden');
-        });
-    });
-    cancelEdit.addEventListener('click', () => {
-        editModal.classList.add('hidden');
-    });
-
-    // เปิด Modal สำหรับแก้ไขห้องพัก
-    const editRoomModal = document.getElementById('editRoomModal');
-    const editRoomButtons = document.querySelectorAll('.edit-room-button');
-    const cancelEditRoom = document.getElementById('cancelEditRoom');
-    editRoomButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            document.getElementById('editRoomId').value = button.getAttribute('data-id');
-            document.getElementById('editRoomName').value = button.getAttribute('data-name');
-            document.getElementById('editRoomType').value = button.getAttribute('data-type');
-            document.getElementById('editRoomDescription').value = button.getAttribute('data-description');
-            document.getElementById('editRoomPrice').value = button.getAttribute('data-price');
-            editRoomModal.classList.remove('hidden');
-        });
-    });
-    cancelEditRoom.addEventListener('click', () => {
-        editRoomModal.classList.add('hidden');
-    });
-
     // ฟังก์ชันยืนยันการลบ
     const deleteButtons = document.querySelectorAll('.delete-button');
     deleteButtons.forEach(button => {
@@ -422,31 +304,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         });
     });
 
-    // เปิด Modal สำหรับแก้ไขข้อมูลห้องพัก
-    document.querySelectorAll('.edit-room-button').forEach(button => {
-    button.addEventListener('click', function () {
-        const modal = document.getElementById('editRoomModal');
-        const roomId = button.getAttribute('data-id');
-        const roomName = button.getAttribute('data-name');
-        const roomType = button.getAttribute('data-type');
-        const roomDescription = button.getAttribute('data-description');
-        const roomPrice = button.getAttribute('data-price');
+    document.addEventListener("DOMContentLoaded", function () {
+    function previewImage(input, previewId) {
+        const preview = document.getElementById(previewId);
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                preview.src = e.target.result;
+                preview.classList.remove("hidden");
+            };
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            preview.classList.add("hidden");
+        }
+    }
 
-        document.getElementById('editRoomId').value = roomId;
-        document.getElementById('editRoomName').value = roomName;
-        document.getElementById('editRoomType').value = roomType;
-        document.getElementById('editRoomDescription').value = roomDescription;
-        document.getElementById('editRoomPrice').value = roomPrice;
-
-        modal.classList.remove('hidden');
-    });
-    });
-
-    // ฟังก์ชันยกเลิกการแก้ไขห้องพัก
-    cancelEditRoom.addEventListener('click', () => {
-        editRoomModal.classList.add('hidden');
+    // สำหรับการเลือกไฟล์รูปภาพของโรงแรม
+    document.getElementById("hotelImage").addEventListener("change", function () {
+        previewImage(this, "hotelImagePreview");
     });
 
+    // สำหรับการเลือกไฟล์รูปภาพของห้อง
+    document.getElementById("roomImage").addEventListener("change", function () {
+        previewImage(this, "roomImagePreview");
+    });
+    });
 </script>
 </body>
 </html>

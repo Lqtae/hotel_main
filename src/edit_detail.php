@@ -47,7 +47,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_room'])) {
             $stmt = $pdo->prepare("DELETE FROM room_images WHERE hotel_room_id = :room_id");
             $stmt->execute([':room_id' => $room_id]);
 
-            $upload_dir = "hotel_main/src/img/room_img/";
+            $upload_dir = "hotel_main/src/img/";
             foreach ($_FILES['room_images']['tmp_name'] as $key => $tmp_name) {
                 $file_name = basename($_FILES['room_images']['name'][$key]);
                 $target_file = $upload_dir . $file_name;
@@ -132,7 +132,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_room'])) {
                 <input type="text" name="room_name" value="<?= htmlspecialchars($room['room_name']) ?>" required class="w-full px-4 py-2 border rounded-md mb-4">
 
                 <label class="block font-semibold">รายละเอียด</label>
-                <textarea name="room_description" required class="w-full h-24 px-4 py-2 border rounded-md mb-4"><?= htmlspecialchars($room['room_description']) ?></textarea>
+                <textarea name="room_description" required class="w-full px-4 py-2 border rounded-md mb-4"><?= htmlspecialchars($room['room_description']) ?></textarea>
 
                 <label class="block font-semibold">ราคา (บาท)</label>
                 <input type="number" name="room_price" value="<?= htmlspecialchars($room['room_price']) ?>" required class="w-full px-4 py-2 border rounded-md mb-4">
@@ -161,12 +161,5 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_room'])) {
             </form>
         </div>
     </main>
-
-    <footer class="w-full bg-white py-4 mt-8 shadow-md">
-        <p class="text-black text-center text-sm">
-            &copy; 2025 <a href="index.php" class="text-black hover:font-semibold">Where's Hotel</a>
-         </p>
-    </footer>
-
 </body>
 </html>
