@@ -1,102 +1,121 @@
 <?php // view_hotel.php
 require 'db.php';
 
-if (!isset($_GET['id'])) {
-    die("ไม่พบข้อมูลโรงแรม");
-}
+    if (!isset($_GET['id'])) {
+        die("ไม่พบข้อมูลโรงแรม");
+    }
 
-$hotel_id = $_GET['id'];
+    $hotel_id = $_GET['id'];
 
-$stmt = $pdo->prepare("
-    SELECT hotels.hotel_id, hotels.hotel_name, hotels.address, provinces.province_name
-    FROM hotels
-    LEFT JOIN provinces ON hotels.province_id = provinces.province_id
-    WHERE hotels.hotel_id = :hotel_id
-");
-
-$stmt->execute([':hotel_id' => $hotel_id]);
-$hotel = $stmt->fetch(PDO::FETCH_ASSOC);
-
-if (!$hotel) {
-    die("ไม่พบข้อมูลโรงแรม");
-}
-
-$stmt = $pdo->prepare("
-    SELECT hr.hotel_room_id, hr.room_name, hr.room_description, hr.room_price 
-    FROM hotel_rooms hr
-    WHERE hr.hotel_id = :hotel_id
-");
-$stmt->execute([':hotel_id' => $hotel_id]);
-$rooms = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// ดึงรูปภาพของแต่ละห้อง
-$room_images = [];
-foreach ($rooms as $room) {
     $stmt = $pdo->prepare("
-        SELECT image_path FROM room_images WHERE hotel_room_id = :hotel_room_id
+        SELECT hotels.hotel_id, hotels.hotel_name, hotels.address, provinces.province_name
+        FROM hotels
+        LEFT JOIN provinces ON hotels.province_id = provinces.province_id
+        WHERE hotels.hotel_id = :hotel_id
     ");
-    $stmt->execute([':hotel_room_id' => $room['hotel_room_id']]);
-    $room_images[$room['hotel_room_id']] = $stmt->fetchAll(PDO::FETCH_COLUMN);
-}
 
-// ดึงข้อมูลประเภทห้อง
-$stmt = $pdo->prepare("SELECT room_type_id, room_type_name FROM room_types");
-$stmt->execute();
-$roomTypes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt->execute([':hotel_id' => $hotel_id]);
+    $hotel = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    if (!$hotel) {
+        die("ไม่พบข้อมูลโรงแรม");
+    }
 
-// ตรวจสอบการเพิ่มห้องพัก
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_room') {
-    $roomTypeId = $_POST['room_type_id'] ?? '';
-    $roomName = $_POST['room_name'] ?? '';
-    $roomDescription = $_POST['room_description'] ?? '';
-    $roomPrice = $_POST['room_price'] ?? 0;
+    $stmt = $pdo->prepare("
+        SELECT hr.hotel_room_id, hr.room_name, hr.room_description, hr.room_price 
+        FROM hotel_rooms hr
+        WHERE hr.hotel_id = :hotel_id
+    ");
+    $stmt->execute([':hotel_id' => $hotel_id]);
+    $rooms = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    if (!empty($roomTypeId) && !empty($roomName) && !empty($roomDescription) && is_numeric($roomPrice)) {
-        // เพิ่มข้อมูลห้องพักลงในฐานข้อมูล
+    // ดึงรูปภาพของแต่ละห้อง
+    $room_images = [];
+    foreach ($rooms as $room) {
         $stmt = $pdo->prepare("
-            INSERT INTO hotel_rooms (hotel_id, room_type_id, room_name, room_description, room_price)
-            VALUES (:hotel_id, :room_type_id, :room_name, :room_description, :room_price)
+            SELECT image_path FROM room_images WHERE hotel_room_id = :hotel_room_id
         ");
-        $stmt->execute([
-            ':hotel_id' => $hotel_id,
-            ':room_type_id' => $roomTypeId,
-            ':room_name' => $roomName,
-            ':room_description' => $roomDescription,
-            ':room_price' => $roomPrice,
-        ]);
+        $stmt->execute([':hotel_room_id' => $room['hotel_room_id']]);
+        $room_images[$room['hotel_room_id']] = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
 
-        // ดึงค่า room_id ที่เพิ่มล่าสุด
-        $roomId = $pdo->lastInsertId();
+    // ดึงข้อมูลประเภทห้อง
+    $stmt = $pdo->prepare("SELECT room_type_id, room_type_name FROM room_types");
+    $stmt->execute();
+    $roomTypes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // ตรวจสอบและอัปโหลดรูปภาพ (รองรับหลายไฟล์)
-        if (!empty($_FILES['room_images']['name'][0])) {
-            $targetDir = __DIR__ . "/../src/img/room_img/";
 
-            foreach ($_FILES['room_images']['name'] as $key => $fileName) {
-                $targetFilePath = $targetDir . basename($fileName);
-                $imagePath = "/hotel_main/src/img/room_img/" . basename($fileName);
+    // ตรวจสอบการเพิ่มห้องพัก
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_room') {
+        $roomTypeId = $_POST['room_type_id'] ?? '';
+        $roomName = $_POST['room_name'] ?? '';
+        $roomDescription = $_POST['room_description'] ?? '';
+        $roomPrice = $_POST['room_price'] ?? 0;
+        $primaryImageIndex = $_POST['primary_image_index'] ?? 0; // รูปหลักที่เลือก
 
-                if (move_uploaded_file($_FILES['room_images']['tmp_name'][$key], $targetFilePath)) {
+        if (!empty($roomTypeId) && !empty($roomName) && !empty($roomDescription) && is_numeric($roomPrice)) {
+            // เพิ่มข้อมูลห้องพักลงฐานข้อมูล
+            $stmt = $pdo->prepare("
+                INSERT INTO hotel_rooms (hotel_id, room_type_id, room_name, room_description, room_price)
+                VALUES (:hotel_id, :room_type_id, :room_name, :room_description, :room_price)
+            ");
+            $stmt->execute([
+                ':hotel_id' => $hotel_id,
+                ':room_type_id' => $roomTypeId,
+                ':room_name' => $roomName,
+                ':room_description' => $roomDescription,
+                ':room_price' => $roomPrice,
+            ]);
+
+            // ดึงค่า room_id ที่เพิ่มล่าสุด
+            $roomId = $pdo->lastInsertId();
+
+            // ตรวจสอบและอัปโหลดรูปภาพ (รองรับหลายไฟล์)
+            if (!empty($_FILES['room_images']['name'][0])) {
+                $targetDir = __DIR__ . "/../src/img/room_img/";
+                $uploadedImages = [];
+
+                foreach ($_FILES['room_images']['name'] as $key => $fileName) {
+                    $targetFilePath = $targetDir . basename($fileName);
+                    $imagePath = "/hotel_main/src/img/room_img/" . basename($fileName);
+
+                    if (move_uploaded_file($_FILES['room_images']['tmp_name'][$key], $targetFilePath)) {
+                        $uploadedImages[] = $imagePath; // เก็บ path ไว้ใช้กำหนดรูปหลักทีหลัง
+                    }
+                }
+
+                // บันทึกลงฐานข้อมูลและตั้งรูปหลัก
+                foreach ($uploadedImages as $index => $imagePath) {
+                    $isPrimary = ($index == $primaryImageIndex) ? 1 : 0;
+
                     $stmt = $pdo->prepare("
-                        INSERT INTO room_images (hotel_room_id, image_path)
-                        VALUES (:hotel_room_id, :image_path)
+                        INSERT INTO room_images (hotel_room_id, image_path, is_primary)
+                        VALUES (:hotel_room_id, :image_path, :is_primary)
                     ");
                     $stmt->execute([
                         ':hotel_room_id' => $roomId,
-                        ':image_path' => $imagePath
+                        ':image_path' => $imagePath,
+                        ':is_primary' => $isPrimary
                     ]);
                 }
             }
-        }
 
-        // รีเฟรชหน้าเพื่อแสดงข้อมูลใหม่
-        header("Location: view_hotel.php?id=$hotel_id");
-        exit;
-    } else {
-        echo "<script>alert('กรุณากรอกข้อมูลให้ครบถ้วน');</script>";
+            // รีเฟรชหน้าเพื่อแสดงข้อมูลใหม่
+            header("Location: view_hotel.php?id=$hotel_id");
+            exit;
+        } else {
+            echo "<script>alert('กรุณากรอกข้อมูลให้ครบถ้วน');</script>";
+        }
     }
-}
+
+    $stmt = $pdo->prepare("
+        SELECT image_path FROM room_images 
+        WHERE hotel_room_id = :hotel_room_id AND is_primary = 1
+        LIMIT 1
+    ");
+    $stmt->execute([':hotel_room_id' => $room['hotel_room_id']]);
+    $primaryImage = $stmt->fetchColumn();
+
 ?>
 
 <!DOCTYPE html>
@@ -110,16 +129,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
 
-    <header class="w-full bg-gray-100 py-6 shadow-md">
+    <header class="w-full bg-gray-100 py-6 shadow-md sticky top-0 z-10">
         <h1 class="text-3xl font-bold text-center">View</h1>
-    </header>
 
-    <main class="flex-grow">
         <div class="absolute top-6 left-4">
             <a href="javascript:history.back()" class="text-gray-700 font-bold text-lg px-4 py-2 rounded-lg hover:text-blue-600">
                 &lt; Back
             </a>
         </div>
+    </header>
+
+    <main class="flex-grow">
 
         <div class="max-w-4xl mx-auto mt-8 mb-8 p-6 bg-white shadow-md rounded-lg">
             <a href="edit_hotel.php?id=<?= $hotel['hotel_id'] ?>">
@@ -162,11 +182,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-700">อัปโหลดรูปภาพ:</label>
-                    <input type="file" name="room_images[]" multiple accept="image/*" class="w-full p-2 border rounded-lg">
+                    <label class="block text-gray-700 font-semibold">อัปโหลดรูปภาพห้องพัก:</label>
+
+                    <!-- ช่องอัปโหลด (ไม่แสดงรูปในนี้) -->
+                    <div id="uploadBox" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition">
+                        📷 <span class="text-gray-500">คลิกเพื่ออัปโหลด</span>
+                        <input type="file" name="room_images[]" multiple accept="image/*" class="hidden" id="roomImages">
+                    </div>
+
+                    <!-- แสดงรูปที่อัปโหลด (แยกต่างหาก) -->
+                    <div id="imagePreview" class="grid grid-cols-3 gap-3 mt-4"></div>
+
+                    <!-- เก็บค่ารูปหลัก -->
+                    <input type="hidden" name="primary_image_index" id="primaryImageIndex" value="0">
                 </div>
 
-                <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600">
+                <button type="submit" class="w-full bg-blue-500 border-blue-500 border-2 text-white p-2 rounded-lg hover:bg-transparent hover:text-blue-600">
                     เพิ่มห้องพัก
                 </button>
             </form>
@@ -178,8 +209,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             <?php if (!empty($rooms)): ?>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <?php foreach ($rooms as $room): ?>
-                        <a href="edit_room.php?id=<?= $room['hotel_room_id'] ?>" class="block bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300">
-                            <img src="<?= htmlspecialchars($room_images[$room['hotel_room_id']][0] ?? '/hotel_main/src/img/no_image.png') ?>" alt="Room Image" class="w-full h-40 object-cover">
+                        <?php
+                            // ดึงรูปหลักของห้องนี้
+                            $stmt = $pdo->prepare("
+                                SELECT image_path FROM room_images 
+                                WHERE hotel_room_id = :hotel_room_id AND is_primary = 1
+                                LIMIT 1
+                            ");
+                            $stmt->execute([':hotel_room_id' => $room['hotel_room_id']]);
+                            $primaryImage = $stmt->fetchColumn();
+                    
+                            // ถ้าไม่มีรูปหลัก ใช้รูปแรกของห้องแทน
+                            if (!$primaryImage && !empty($room_images[$room['hotel_room_id']])) {
+                                $primaryImage = $room_images[$room['hotel_room_id']][0];
+                            }
+                        
+                            // ถ้าไม่มีรูปภาพเลย ให้ใช้รูป `no_image.png`
+                            if (!$primaryImage) {
+                                $primaryImage = "/hotel_main/src/img/no_image.png";
+                            }
+                        ?>
+                        <a href="edit_room.php?id=<?= $room['hotel_room_id'] ?>" 
+                           class="block bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300">
+                            <img src="<?= htmlspecialchars($primaryImage) ?>" alt="Room Image" class="w-full h-40 object-cover">
                             <div class="p-4">
                                 <h3 class="text-lg font-bold"><?= htmlspecialchars($room['room_name']) ?></h3>
                                 <p class="text-gray-600 text-sm mb-2"><?= htmlspecialchars($room['room_description']) ?></p>
@@ -222,8 +274,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     });
                 }
             });
+        });   
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const fileInput = document.querySelector('#roomImages');
+            const previewContainer = document.querySelector('#imagePreview');
+            const primaryImageInput = document.querySelector('#primaryImageIndex');
+            const uploadBox = document.querySelector("#uploadBox");
+
+            // ปิดการแสดงรูปในกล่องอัปโหลด
+            uploadBox.innerHTML = `<span class="text-gray-500">📷 คลิกเพื่ออัปโหลด</span>`;
+
+            // เมื่อคลิกที่ช่องอัปโหลด
+            uploadBox.addEventListener("click", function () {
+                fileInput.click();
+            });
+        
+            // เมื่ออัปโหลดไฟล์
+            fileInput.addEventListener("change", function () {
+                previewContainer.innerHTML = ""; // ล้างรูปเก่าที่เคยแสดง
+            
+                if (fileInput.files.length > 0) {
+                    Array.from(fileInput.files).forEach((file, index) => {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            // สร้าง div ห่อรูป
+                            const imgWrapper = document.createElement("div");
+                            imgWrapper.classList.add("relative", "group", "border", "border-gray-200", "rounded-lg", "p-2");
+                        
+                            // รูปที่อัปโหลด
+                            const img = document.createElement("img");
+                            img.src = e.target.result;
+                            img.classList.add("w-full", "h-24", "object-cover", "rounded-md");
+                        
+                            // ปุ่มตั้งเป็นรูปหลัก
+                            const selectBtn = document.createElement("button");
+                            selectBtn.innerText = index === 0 ? "⭐ รูปหลัก" : "ตั้งเป็นรูปหลัก";
+                            selectBtn.classList.add("absolute", "top-1", "left-1", "bg-white", "text-xs", "p-1", "rounded", "shadow-md", "hover:bg-gray-100", "transition");
+                        
+                            // คลิกเพื่อเปลี่ยนรูปหลัก
+                            selectBtn.addEventListener("click", function (e) {
+                                e.preventDefault();
+                                document.querySelectorAll("#imagePreview button").forEach(btn => btn.innerText = "ตั้งเป็นรูปหลัก");
+                                selectBtn.innerText = "⭐ รูปหลัก";
+                                primaryImageInput.value = index;
+                            });
+                        
+                            imgWrapper.appendChild(img);
+                            imgWrapper.appendChild(selectBtn);
+                            previewContainer.appendChild(imgWrapper);
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                }
+            });
         });
     </script>
-
 </body>
 </html>

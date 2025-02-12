@@ -81,9 +81,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" href="./img/icon.png">
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 flex flex-col min-h-screen">
 
-<header class="w-full bg-gray-100 py-6 shadow-md">
+<header class="w-full bg-gray-100 py-6 shadow-md sticky top-0 z-10"> 
     <h1 class="text-3xl font-bold text-center">Admin Dashboard</h1>
 
     <div class="absolute top-6 left-4">
@@ -99,11 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </header>
 
-<main class="w-full max-w-4xl mx-auto mt-8 px-4">
-
-    
-
-    
+<main class="w-full max-w-4xl mx-auto mt-8 px-4 flex-grow">
 
     <!-- ส่วนเพิ่มข้อมูลโรงแรม -->
     <div class="bg-white shadow-md rounded-lg p-6 mb-8">
@@ -187,10 +183,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </main>
 
-    <footer class="w-full bg-white py-4 mt-8 shadow-md fixed bottom-0">
-                <p class="text-black text-center text-sm">
-                    &copy; 2025 <a href="index.php" class="text-black hover:font-semibold">Where's Hotel</a>
-                </p>
+    <footer class="w-full bg-white py-4 mt-8 shadow-md">
+        <p class="text-black text-center text-sm">
+            &copy; 2025 <a href="index.php" class="text-black hover:font-semibold">Where's Hotel</a>
+        </p>
     </footer>
 
 <script>
