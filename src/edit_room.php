@@ -228,7 +228,7 @@ if (isset($_POST['set_primary'])) {
 
                             const deleteBtn = document.createElement("button");
                             deleteBtn.innerText = "❌";
-                            deleteBtn.classList.add("absolute", "top-1", "right-1", "bg-red-500", "text-white", "px-2", "py-1", "rounded-md", "text-xs", "hover:bg-red-600");
+                            deleteBtn.classList.add("absolute", "top-1", "right-1", "bg-white", "text-white", "px-2", "py-1", "rounded-md", "text-xs", "hover:bg-red-600");
 
                             deleteBtn.addEventListener("click", function (e) {
                                 e.preventDefault();

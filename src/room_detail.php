@@ -1,4 +1,4 @@
-<?php
+<?php // room_detail.php
 include 'db.php';
 include 'functions.php';
 
@@ -27,9 +27,18 @@ $roomImages = getRoomImagesByRoomId($room_id);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($roomDetails['room_name']) ?> - รายละเอียดห้องพัก</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css">
     <link rel="icon" href="./img/icon.png">
+
+    <style>
+        /* เอฟเฟกต์ขยายเมื่อ hover */
+        .image-container img {
+            transition: transform 0.3s ease-in-out;
+        }
+        .image-container img:hover {
+            transform: scale(1.1);
+        }
+    </style>
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
 
@@ -47,24 +56,19 @@ $roomImages = getRoomImagesByRoomId($room_id);
 
     <div class="bg-white shadow-md rounded-lg p-6">
         <h2 class="text-xl font-semibold"><?= htmlspecialchars($roomDetails['room_name']) ?></h2>
-        <p class="text-gray-700"><?= htmlspecialchars($roomDetails['room_description']) ?></p>
+        <p class="text-gray-700"><?= nl2br(htmlspecialchars($roomDetails['room_description'])) ?></p>
         <p class="text-gray-900 font-bold mt-2">ราคา: <?= number_format($roomDetails['room_price'], 2) ?> บาท/คืน</p>
     </div>
 
-    <div class="mt-6">
+    <div class="bg-white shadow-md rounded-lg mt-6 p-6">
         <h3 class="text-2xl font-bold mb-4">รูปภาพห้องพัก</h3>
         <?php if (!empty($roomImages)): ?>
-            <div class="swiper mySwiper">
-                <div class="swiper-wrapper">
-                    <?php foreach ($roomImages as $image): ?>
-                        <div class="swiper-slide">
-                            <img src="<?= htmlspecialchars($image['image_path']) ?>" alt="Room Image" class="w-full h-64 object-cover rounded-lg shadow">
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-                <div class="swiper-button-next"></div>
-                <div class="swiper-button-prev"></div>
-                <div class="swiper-pagination"></div>
+            <div class="grid grid-cols-3 gap-3">
+                <?php foreach ($roomImages as $image): ?>
+                    <div class="image-container">
+                        <img src="<?= htmlspecialchars($image['image_path']) ?>" alt="Room Image" class="w-full h-64 object-cover rounded-lg shadow">
+                    </div>
+                <?php endforeach; ?>
             </div>
         <?php else: ?>
             <p class="text-gray-700">ไม่มีรูปภาพสำหรับห้องพักนี้</p>
@@ -78,20 +82,6 @@ $roomImages = getRoomImagesByRoomId($room_id);
         &copy; 2025 <a href="index.php" class="text-black hover:font-semibold">Where's Hotel</a>
     </p>
 </footer>
-
-<script>
-    var swiper = new Swiper(".mySwiper", {
-        loop: true,
-        navigation: {
-            nextEl: ".swiper-button-next",
-            prevEl: ".swiper-button-prev",
-        },
-        pagination: {
-            el: ".swiper-pagination",
-            clickable: true,
-        },
-    });
-</script>
 
 </body>
 </html>

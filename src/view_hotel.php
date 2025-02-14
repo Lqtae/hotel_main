@@ -1,121 +1,48 @@
 <?php // view_hotel.php
 require 'db.php';
+require 'functions.php';
 
-    if (!isset($_GET['id'])) {
-        die("ไม่พบข้อมูลโรงแรม");
-    }
+if (!isset($_GET['id'])) {
+    die("ไม่พบข้อมูลโรงแรม");
+}
 
-    $hotel_id = $_GET['id'];
+$hotel_id = $_GET['id'];
 
-    $stmt = $pdo->prepare("
-        SELECT hotels.hotel_id, hotels.hotel_name, hotels.address, provinces.province_name
-        FROM hotels
-        LEFT JOIN provinces ON hotels.province_id = provinces.province_id
-        WHERE hotels.hotel_id = :hotel_id
-    ");
+$hotel = getHotelDetailsById($hotel_id);
+if (!$hotel) {
+    die("ไม่พบข้อมูลโรงแรม");
+}
 
-    $stmt->execute([':hotel_id' => $hotel_id]);
-    $hotel = $stmt->fetch(PDO::FETCH_ASSOC);
+$rooms = getRoomsByHotelId($hotel_id);
+$room_images = [];
+foreach ($rooms as $room) {
+    $room_images[$room['hotel_room_id']] = getRoomImages($room['hotel_room_id']);
+}
 
-    if (!$hotel) {
-        die("ไม่พบข้อมูลโรงแรม");
-    }
+$roomTypes = getAllRoomTypes();
 
-    $stmt = $pdo->prepare("
-        SELECT hr.hotel_room_id, hr.room_name, hr.room_description, hr.room_price 
-        FROM hotel_rooms hr
-        WHERE hr.hotel_id = :hotel_id
-    ");
-    $stmt->execute([':hotel_id' => $hotel_id]);
-    $rooms = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// ตรวจสอบการเพิ่มห้องพัก
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_room') {
+    $roomData = [
+        'room_type_id' => $_POST['room_type_id'] ?? '',
+        'room_name' => $_POST['room_name'] ?? '',
+        'room_description' => $_POST['room_description'] ?? '',
+        'room_price' => $_POST['room_price'] ?? 0,
+        'primary_image_index' => $_POST['primary_image_index'] ?? 0
+    ];
 
-    // ดึงรูปภาพของแต่ละห้อง
-    $room_images = [];
-    foreach ($rooms as $room) {
-        $stmt = $pdo->prepare("
-            SELECT image_path FROM room_images WHERE hotel_room_id = :hotel_room_id
-        ");
-        $stmt->execute([':hotel_room_id' => $room['hotel_room_id']]);
-        $room_images[$room['hotel_room_id']] = $stmt->fetchAll(PDO::FETCH_COLUMN);
-    }
-
-    // ดึงข้อมูลประเภทห้อง
-    $stmt = $pdo->prepare("SELECT room_type_id, room_type_name FROM room_types");
-    $stmt->execute();
-    $roomTypes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-
-    // ตรวจสอบการเพิ่มห้องพัก
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_room') {
-        $roomTypeId = $_POST['room_type_id'] ?? '';
-        $roomName = $_POST['room_name'] ?? '';
-        $roomDescription = $_POST['room_description'] ?? '';
-        $roomPrice = $_POST['room_price'] ?? 0;
-        $primaryImageIndex = $_POST['primary_image_index'] ?? 0; // รูปหลักที่เลือก
-
-        if (!empty($roomTypeId) && !empty($roomName) && !empty($roomDescription) && is_numeric($roomPrice)) {
-            // เพิ่มข้อมูลห้องพักลงฐานข้อมูล
-            $stmt = $pdo->prepare("
-                INSERT INTO hotel_rooms (hotel_id, room_type_id, room_name, room_description, room_price)
-                VALUES (:hotel_id, :room_type_id, :room_name, :room_description, :room_price)
-            ");
-            $stmt->execute([
-                ':hotel_id' => $hotel_id,
-                ':room_type_id' => $roomTypeId,
-                ':room_name' => $roomName,
-                ':room_description' => $roomDescription,
-                ':room_price' => $roomPrice,
-            ]);
-
-            // ดึงค่า room_id ที่เพิ่มล่าสุด
-            $roomId = $pdo->lastInsertId();
-
-            // ตรวจสอบและอัปโหลดรูปภาพ (รองรับหลายไฟล์)
-            if (!empty($_FILES['room_images']['name'][0])) {
-                $targetDir = __DIR__ . "/../src/img/room_img/";
-                $uploadedImages = [];
-
-                foreach ($_FILES['room_images']['name'] as $key => $fileName) {
-                    $targetFilePath = $targetDir . basename($fileName);
-                    $imagePath = "/hotel_main/src/img/room_img/" . basename($fileName);
-
-                    if (move_uploaded_file($_FILES['room_images']['tmp_name'][$key], $targetFilePath)) {
-                        $uploadedImages[] = $imagePath; // เก็บ path ไว้ใช้กำหนดรูปหลักทีหลัง
-                    }
-                }
-
-                // บันทึกลงฐานข้อมูลและตั้งรูปหลัก
-                foreach ($uploadedImages as $index => $imagePath) {
-                    $isPrimary = ($index == $primaryImageIndex) ? 1 : 0;
-
-                    $stmt = $pdo->prepare("
-                        INSERT INTO room_images (hotel_room_id, image_path, is_primary)
-                        VALUES (:hotel_room_id, :image_path, :is_primary)
-                    ");
-                    $stmt->execute([
-                        ':hotel_room_id' => $roomId,
-                        ':image_path' => $imagePath,
-                        ':is_primary' => $isPrimary
-                    ]);
-                }
-            }
-
-            // รีเฟรชหน้าเพื่อแสดงข้อมูลใหม่
+    if (!empty($roomData['room_type_id']) && !empty($roomData['room_name']) && !empty($roomData['room_description']) && is_numeric($roomData['room_price'])) {
+        $result = addRoom($hotel_id, $roomData, $_FILES);
+        if ($result['success']) {
             header("Location: view_hotel.php?id=$hotel_id");
             exit;
         } else {
-            echo "<script>alert('กรุณากรอกข้อมูลให้ครบถ้วน');</script>";
+            echo "<script>alert('เกิดข้อผิดพลาด: " . $result['error'] . "');</script>";
         }
+    } else {
+        echo "<script>alert('กรุณากรอกข้อมูลให้ครบถ้วน');</script>";
     }
-
-    $stmt = $pdo->prepare("
-        SELECT image_path FROM room_images 
-        WHERE hotel_room_id = :hotel_room_id AND is_primary = 1
-        LIMIT 1
-    ");
-    $stmt->execute([':hotel_room_id' => $room['hotel_room_id']]);
-    $primaryImage = $stmt->fetchColumn();
-
+}
 ?>
 
 <!DOCTYPE html>

@@ -126,4 +126,188 @@ function deleteHotelImage($imageId) {
         return ['success' => false, 'error' => 'ไม่พบรูปภาพ'];
     }
 }
+
+function getPrimaryRoomImage($pdo, $hotel_room_id) {
+    // ค้นหารูปหลักของห้องพักที่มี is_primary = 1
+    $stmt = $pdo->prepare("
+        SELECT image_path FROM room_images 
+        WHERE hotel_room_id = :hotel_room_id AND is_primary = 1
+        LIMIT 1
+    ");
+    $stmt->execute([':hotel_room_id' => $hotel_room_id]);
+    $primaryImage = $stmt->fetchColumn();
+
+    // ถ้าไม่มีรูปหลัก ให้ดึงรูปแรกของห้องพักแทน
+    if (!$primaryImage) {
+        $stmt = $pdo->prepare("
+            SELECT image_path FROM room_images 
+            WHERE hotel_room_id = :hotel_room_id
+            ORDER BY image_id ASC
+            LIMIT 1
+        ");
+        $stmt->execute([':hotel_room_id' => $hotel_room_id]);
+        $primaryImage = $stmt->fetchColumn();
+    }
+
+    // ถ้าไม่มีรูปภาพเลย ให้ใช้รูป `no_image.png`
+    return $primaryImage ?: "/hotel_main/src/img/no_image.png";
+}
+
+function getAllHotels() {
+    global $pdo;
+    $stmt = $pdo->query("
+        SELECT hotels.hotel_id, hotels.hotel_name, hotels.address, provinces.province_name,
+               GROUP_CONCAT(hotel_rooms.room_name SEPARATOR ', ') AS room_names
+        FROM hotels
+        LEFT JOIN provinces ON hotels.province_id = provinces.province_id
+        LEFT JOIN hotel_rooms ON hotels.hotel_id = hotel_rooms.hotel_id
+        GROUP BY hotels.hotel_id
+    ");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// ดึงข้อมูลจังหวัดทั้งหมด
+function getAllProvinces() {
+    global $pdo;
+    return $pdo->query("SELECT * FROM provinces")->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// ดึงข้อมูลประเภทห้องทั้งหมด
+function getAllRoomTypes() {
+    global $pdo;
+    return $pdo->query("SELECT * FROM room_types")->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// เพิ่มโรงแรม
+function addHotel($hotelName, $address, $provinceId, $hotelImage) {
+    global $pdo;
+    
+    $stmt = $pdo->prepare("
+        INSERT INTO hotels (hotel_name, address, province_id)
+        VALUES (:hotel_name, :address, :province_id)
+    ");
+    $stmt->execute([
+        ':hotel_name' => $hotelName,
+        ':address' => $address,
+        ':province_id' => $provinceId,
+    ]);
+
+    $hotelId = $pdo->lastInsertId();
+
+    if (!empty($hotelImage['name'])) {
+        return uploadHotelImage($hotelId, $hotelImage);
+    }
+
+    return ['success' => true, 'hotel_id' => $hotelId];
+}
+
+// ลบโรงแรม
+function deleteHotel($hotelId) {
+    global $pdo;
+    $stmt = $pdo->prepare("DELETE FROM hotels WHERE hotel_id = :hotel_id");
+    $stmt->execute([':hotel_id' => $hotelId]);
+    return ['success' => true];
+}
+
+function addRoom($hotel_id, $roomData, $fileData) {
+    global $pdo;
+
+    try {
+        // เพิ่มข้อมูลห้องพักลงในฐานข้อมูล
+        $stmt = $pdo->prepare("
+            INSERT INTO hotel_rooms (hotel_id, room_type_id, room_name, room_description, room_price)
+            VALUES (:hotel_id, :room_type_id, :room_name, :room_description, :room_price)
+        ");
+        $stmt->execute([
+            ':hotel_id' => $hotel_id,
+            ':room_type_id' => $roomData['room_type_id'],
+            ':room_name' => $roomData['room_name'],
+            ':room_description' => $roomData['room_description'],
+            ':room_price' => $roomData['room_price'],
+        ]);
+        $roomId = $pdo->lastInsertId(); // ดึง ID ห้องที่เพิ่งเพิ่ม
+
+        // ตรวจสอบว่ามีการอัปโหลดไฟล์หรือไม่
+        if (!empty($fileData['room_images']['name'][0])) {
+            $targetDir = $_SERVER['DOCUMENT_ROOT'] . "/hotel_main/src/img/room_img/";
+            $uploadedImages = [];
+
+            foreach ($fileData['room_images']['name'] as $key => $fileName) {
+                $targetFilePath = $targetDir . basename($fileName);
+                $imagePath = "/hotel_main/src/img/room_img/" . basename($fileName);
+
+                // อัปโหลดไฟล์ไปยังเซิร์ฟเวอร์
+                if (move_uploaded_file($fileData['room_images']['tmp_name'][$key], $targetFilePath)) {
+                    $uploadedImages[] = $imagePath;
+                }
+            }
+
+            // บันทึกเส้นทางไฟล์รูปภาพลงฐานข้อมูล
+            foreach ($uploadedImages as $index => $imagePath) {
+                $isPrimary = ($index == $roomData['primary_image_index']) ? 1 : 0;
+
+                $stmt = $pdo->prepare("
+                    INSERT INTO room_images (hotel_room_id, image_path, is_primary)
+                    VALUES (:hotel_room_id, :image_path, :is_primary)
+                ");
+                $stmt->execute([
+                    ':hotel_room_id' => $roomId,
+                    ':image_path' => $imagePath,
+                    ':is_primary' => $isPrimary
+                ]);
+            }
+        }
+
+        return ['success' => true, 'room_id' => $roomId];
+
+    } catch (Exception $e) {
+        return ['success' => false, 'error' => $e->getMessage()];
+    }
+}
+
+// ฟังก์ชันดึงรูปภาพของห้องพัก
+function getRoomImages($hotel_room_id) {
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT image_path FROM room_images WHERE hotel_room_id = :hotel_room_id");
+    $stmt->execute([':hotel_room_id' => $hotel_room_id]);
+    return $stmt->fetchAll(PDO::FETCH_COLUMN);
+}
+
+// ฟังก์ชันลบไฟล์ภาพจากโฟลเดอร์
+function deleteImageFile($image_path) {
+    $full_path = __DIR__ . "/.." . $image_path;
+    if (file_exists($full_path)) {
+        unlink($full_path);
+    }
+}
+
+// ฟังก์ชันลบรูปภาพจากฐานข้อมูลและไฟล์เซิร์ฟเวอร์
+function deleteRoomImage($pdo, $room_id, $image_path) {
+    deleteImageFile($image_path); // ลบไฟล์ภาพจริงจากเซิร์ฟเวอร์
+
+    $stmt = $pdo->prepare("DELETE FROM room_images WHERE hotel_room_id = :room_id AND image_path = :image_path");
+    return $stmt->execute([
+        ':room_id' => $room_id,
+        ':image_path' => $image_path
+    ]);
+}
+
+// ฟังก์ชันลบห้องพักและรูปภาพทั้งหมดที่เกี่ยวข้อง
+function deleteRoom($pdo, $room_id) {
+    // ดึงรายการรูปภาพทั้งหมดของห้อง
+    $stmt = $pdo->prepare("SELECT image_path FROM room_images WHERE hotel_room_id = :room_id");
+    $stmt->execute([':room_id' => $room_id]);
+    $images = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    // ลบไฟล์ภาพทั้งหมด
+    foreach ($images as $image_path) {
+        deleteImageFile($image_path);
+    }
+
+    // ลบข้อมูลรูปภาพจากฐานข้อมูล
+    $pdo->prepare("DELETE FROM room_images WHERE hotel_room_id = :room_id")->execute([':room_id' => $room_id]);
+
+    // ลบข้อมูลห้องพักจากฐานข้อมูล
+    return $pdo->prepare("DELETE FROM hotel_rooms WHERE hotel_room_id = :room_id")->execute([':room_id' => $room_id]);
+}
 ?>

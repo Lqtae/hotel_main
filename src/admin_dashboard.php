@@ -1,76 +1,27 @@
-<?php //admin_dashboard.php
-// เชื่อมต่อฐานข้อมูล
+<?php 
+// admin_dashboard.php
 require 'db.php';
+require 'functions.php';
 
-// ดึงข้อมูลโรงแรมทั้งหมด
-$hotels = $pdo->query("
-    SELECT hotels.hotel_id, hotels.hotel_name, hotels.address, provinces.province_name,
-           GROUP_CONCAT(hotel_rooms.room_name SEPARATOR ', ') AS room_names
-    FROM hotels
-    LEFT JOIN provinces ON hotels.province_id = provinces.province_id
-    LEFT JOIN hotel_rooms ON hotels.hotel_id = hotel_rooms.hotel_id
-    GROUP BY hotels.hotel_id
-")->fetchAll(PDO::FETCH_ASSOC);
-
-// ดึงข้อมูลจังหวัดทั้งหมด
-$provinces = $pdo->query("SELECT * FROM provinces")->fetchAll(PDO::FETCH_ASSOC);
-
-// ดึงข้อมูลประเภทห้องทั้งหมด
-$roomTypes = $pdo->query("SELECT * FROM room_types")->fetchAll(PDO::FETCH_ASSOC);
+// ดึงข้อมูลโรงแรม, จังหวัด และประเภทห้องจากฟังก์ชัน
+$hotels = getAllHotels();
+$provinces = getAllProvinces();
+$roomTypes = getAllRoomTypes();
 
 // จัดการคำขอ POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($_POST['action'] === 'add_hotel') {
-        // เพิ่มโรงแรม
-        $hotelName = $_POST['hotel_name'];
-        $address = $_POST['address'];
-        $provinceId = $_POST['province_id'];
-
-        $stmt = $pdo->prepare("
-            INSERT INTO hotels (hotel_name, address, province_id)
-            VALUES (:hotel_name, :address, :province_id)
-        ");
-        $stmt->execute([
-            ':hotel_name' => $hotelName,
-            ':address' => $address,
-            ':province_id' => $provinceId,
-        ]);
-
-        $hotelId = $pdo->lastInsertId();
-
-        if (!empty($_FILES['hotel_image']['name'])) {
-            $targetDir = __DIR__ . "/../src/img/hotel_img/"; // โฟลเดอร์เก็บรูปภาพ
-            $originalFileName = $_FILES['hotel_image']['name']; // ชื่อไฟล์เดิม
-            $targetFilePath = $targetDir . $originalFileName;
-            $imagePath = "/hotel_main/src/img/hotel_img/" . $originalFileName; // พาธเก็บใน Database
-    
-            // อัปโหลดไฟล์
-            if (move_uploaded_file($_FILES['hotel_image']['tmp_name'], $targetFilePath)) {
-                // บันทึกลง Database
-                $sql = "INSERT INTO hotel_images (hotel_id, image_path) VALUES (:hotel_id, :image_path)";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([
-                    ':hotel_id' => $hotelId,
-                    ':image_path' => $imagePath
-                ]);
-            } else {
-                echo "เกิดข้อผิดพลาดในการอัปโหลดไฟล์";
-            }
-        } 
-
+        $result = addHotel($_POST['hotel_name'], $_POST['address'], $_POST['province_id'], $_FILES['hotel_image']);
         header('Location: admin_dashboard.php');
         exit;
-
     } elseif ($_POST['action'] === 'delete') {
-        // ลบโรงแรม
-        $hotelId = $_POST['hotel_id'];
-        $stmt = $pdo->prepare("DELETE FROM hotels WHERE hotel_id = :hotel_id");
-        $stmt->execute([':hotel_id' => $hotelId]);
+        deleteHotel($_POST['hotel_id']);
         header('Location: admin_dashboard.php');
         exit;
     }     
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
