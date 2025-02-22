@@ -51,8 +51,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($hotel['hotel_name']) ?> - ข้อมูลโรงแรม</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
     <link rel="icon" href="./img/icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
 
@@ -61,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         <div class="absolute top-6 left-4">
             <a href="javascript:history.back()" class="text-gray-700 font-bold text-lg px-4 py-2 rounded-lg hover:text-blue-600">
-                &lt; Back
+            <i class="fa-solid fa-chevron-left"></i>
             </a>
         </div>
     </header>
@@ -128,6 +129,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     เพิ่มห้องพัก
                 </button>
             </form>
+
+            <h2 class="text-xl font-bold mt-6 mb-4">ตัวอย่างห้องพักที่เพิ่ม</h2>
+            <div id="previewCardContainer" class="hidden bg-white shadow-lg rounded-lg overflow-hidden transition-shadow duration-300">
+                <img id="previewImage" src="/hotel_main/src/img/no_image.png" alt="Room Image" class="w-full h-40 object-cover">
+                <div class="p-4">
+                    <h3 id="previewRoomName" class="text-lg font-bold">ชื่อห้องพัก</h3>
+                    <p id="previewRoomDescription" class="text-gray-600 text-sm mb-2">รายละเอียดห้องพัก</p>
+                    <p id="previewRoomPrice" class="text-gray-800 font-semibold">0 บาท/คืน</p>
+                </div>
+            </div>
+
 
             <hr class="my-6">
 
@@ -256,6 +268,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 }
             });
         });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const roomNameInput = document.querySelector('input[name="room_name"]');
+            const roomDescriptionInput = document.querySelector('textarea[name="room_description"]');
+            const roomPriceInput = document.querySelector('input[name="room_price"]');
+            const fileInput = document.querySelector('#roomImages');
+
+            const previewCardContainer = document.querySelector("#previewCardContainer");
+            const previewImage = document.querySelector("#previewImage");
+            const previewRoomName = document.querySelector("#previewRoomName");
+            const previewRoomDescription = document.querySelector("#previewRoomDescription");
+            const previewRoomPrice = document.querySelector("#previewRoomPrice");
+
+            function updatePreview() {
+                // แสดงตัวอย่างเมื่อกรอกข้อมูลอย่างน้อย 1 ช่อง
+                if (roomNameInput.value || roomDescriptionInput.value || roomPriceInput.value || fileInput.files.length > 0) {
+                    previewCardContainer.classList.remove("hidden");
+                } else {
+                    previewCardContainer.classList.add("hidden");
+                }
+
+                previewRoomName.textContent = roomNameInput.value || "ชื่อห้องพัก";
+                previewRoomDescription.textContent = roomDescriptionInput.value || "รายละเอียดห้องพัก";
+                previewRoomPrice.textContent = roomPriceInput.value ? `${parseFloat(roomPriceInput.value).toLocaleString()} บาท` : "0 บาท";
+            }
+
+            // อัปเดตตัวอย่างเมื่อกรอกข้อมูล
+            roomNameInput.addEventListener("input", updatePreview);
+            roomDescriptionInput.addEventListener("input", updatePreview);
+            roomPriceInput.addEventListener("input", updatePreview);
+
+            // แสดงตัวอย่างรูปที่อัปโหลด
+            fileInput.addEventListener("change", function () {
+                if (fileInput.files.length > 0) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        previewImage.src = e.target.result;
+                    };
+                    // ใช้ไฟล์แรกที่อัปโหลดมาเป็นตัวอย่าง
+                    reader.readAsDataURL(fileInput.files[0]);
+                } else {
+                    previewImage.src = "/hotel_main/src/img/no_image.png"; // ใช้รูปเริ่มต้นถ้าไม่มีอัปโหลด
+                }
+            
+                // ทำให้ตัวอย่างห้องพักแสดงออกมา
+                previewCardContainer.classList.remove("hidden");
+            });
+        });
+
     </script>
 </body>
 </html>

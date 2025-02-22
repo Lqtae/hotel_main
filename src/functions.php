@@ -156,15 +156,18 @@ function getPrimaryRoomImage($pdo, $hotel_room_id) {
 function getAllHotels() {
     global $pdo;
     $stmt = $pdo->query("
-        SELECT hotels.hotel_id, hotels.hotel_name, hotels.address, provinces.province_name,
+        SELECT hotels.hotel_id, hotels.hotel_name, hotels.address, 
+               provinces.province_name, regions.region_name,
                GROUP_CONCAT(hotel_rooms.room_name SEPARATOR ', ') AS room_names
         FROM hotels
         LEFT JOIN provinces ON hotels.province_id = provinces.province_id
+        LEFT JOIN regions ON provinces.region_id = regions.region_id
         LEFT JOIN hotel_rooms ON hotels.hotel_id = hotel_rooms.hotel_id
         GROUP BY hotels.hotel_id
     ");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
 
 // ดึงข้อมูลจังหวัดทั้งหมด
 function getAllProvinces() {
@@ -310,4 +313,20 @@ function deleteRoom($pdo, $room_id) {
     // ลบข้อมูลห้องพักจากฐานข้อมูล
     return $pdo->prepare("DELETE FROM hotel_rooms WHERE hotel_room_id = :room_id")->execute([':room_id' => $room_id]);
 }
+
+function check_admin() {
+    if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+        header("Location: index.php");
+        exit();
+    }
+}
+
+function getHotelImage($pdo, $hotel_id) {
+    $stmt = $pdo->prepare("SELECT image_path FROM hotel_images WHERE hotel_id = ? LIMIT 1");
+    $stmt->execute([$hotel_id]);
+    $image = $stmt->fetchColumn();
+
+    return $image ? htmlspecialchars($image) : "/hotel_main/src/img/hotel_img/default.jpg";
+}
+
 ?>

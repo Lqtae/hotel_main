@@ -1,14 +1,14 @@
-<?php 
-// admin_dashboard.php
+<?php // admin_dashboard.php
 require 'db.php';
 require 'functions.php';
 
-// ดึงข้อมูลโรงแรม, จังหวัด และประเภทห้องจากฟังก์ชัน
+session_start();
+check_admin();
+
 $hotels = getAllHotels();
 $provinces = getAllProvinces();
 $roomTypes = getAllRoomTypes();
 
-// จัดการคำขอ POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($_POST['action'] === 'add_hotel') {
         $result = addHotel($_POST['hotel_name'], $_POST['address'], $_POST['province_id'], $_FILES['hotel_image']);
@@ -18,10 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         deleteHotel($_POST['hotel_id']);
         header('Location: admin_dashboard.php');
         exit;
-    }     
+    }
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -29,8 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
     <link rel="icon" href="./img/icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
 
@@ -39,13 +39,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="absolute top-6 left-4">
             <a href="javascript:history.back()" class="text-gray-700 font-bold text-lg px-4 py-2 rounded-lg hover:text-blue-600">
-                &lt; Back
+            <i class="fa-solid fa-chevron-left"></i>
             </a>
     </div>
 
-    <div class="absolute top-6 right-4">
+    <div class="absolute top-6 right-6">
             <a href="index.php" class="text-gray-700 font-bold text-lg px-4 py-2 rounded-lg hover:text-blue-600">
-                index
+            <i class="fa-solid fa-house"></i>
             </a>
     </div>
 </header>

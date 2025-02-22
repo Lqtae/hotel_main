@@ -1,5 +1,9 @@
 <?php
 require 'db.php';
+require 'functions.php';
+
+session_start();
+check_admin();
 
 if (!isset($_GET['id'])) {
     die("ไม่พบข้อมูลห้องพัก");
@@ -108,7 +112,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_room'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>แก้ไขห้องพัก - <?= htmlspecialchars($room['room_name']) ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
     <link rel="icon" href="./img/icon.png">
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">

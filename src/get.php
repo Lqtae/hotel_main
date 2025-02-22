@@ -1,30 +1,27 @@
-<?php //get.php
-include 'db.php'; 
+<?php
+require 'db.php';
 
-if (isset($_POST['region_id'])) {
-     $regionId = $_POST['region_id']; 
+header('Content-Type: text/html; charset=utf-8');
 
-     $query = "SELECT * FROM provinces WHERE region_id = ?";
-     $stmt = $conn->prepare($query); 
+if (isset($_GET['region_id'])) {
+    $regionId = $_GET['region_id'];
 
-     if ($stmt) {
-          $stmt->bind_param('i', $regionId);
-          $stmt->execute();
-          $result = $stmt->get_result();
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM provinces WHERE region_id = ?");
+        $stmt->execute([$regionId]);
+        $provinces = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-          if ($result->num_rows > 0) {
-               echo '<option value="">-- เลือกจังหวัด --</option>';
-               while ($row = $result->fetch_assoc()) {
-                    echo '<option value="' . $row['province_id'] . '">' . $row['province_name'] . '</option>';
-               }
-          } else {
-               echo '<option value="">-- ไม่มีข้อมูลจังหวัด --</option>';
-          }
-
-          $stmt->close(); 
-     } else {
-          echo '<option value="">-- SQL Error: ' . $conn->error . ' --</option>';
-     }
+        if ($provinces) {
+            foreach ($provinces as $province) {
+                echo '<option value="' . $province['province_id'] . '">' . $province['province_name'] . '</option>';
+            }
+        } else {
+            echo '<option value="">-- ไม่มีข้อมูลจังหวัด --</option>';
+        }
+    } catch (PDOException $e) {
+        echo '<option value="">-- SQL Error: ' . $e->getMessage() . ' --</option>';
+    }
 } else {
-     echo '<option value="">-- region_id is not set --</option>';
+    echo '<option value="">-- region_id is not set --</option>';
 }
+?>

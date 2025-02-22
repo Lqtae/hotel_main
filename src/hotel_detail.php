@@ -26,8 +26,9 @@ $roomDetails = getRoomsByHotelId($id);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>รายละเอียดโรงแรม</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
     <link rel="icon" href="./img/icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
 
@@ -39,7 +40,7 @@ $roomDetails = getRoomsByHotelId($id);
 
     <div class="absolute top-6 left-4">
         <a href="javascript:history.back()" class="text-gray-700 font-bold text-lg px-4 py-2 rounded-lg hover:text-blue-600">
-            &lt; Back
+        <i class="fa-solid fa-chevron-left"></i>
         </a>
     </div>
 

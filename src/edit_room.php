@@ -1,5 +1,9 @@
 <?php //edit_room.php 
 require 'db.php';
+require 'functions.php';
+
+session_start();
+check_admin();
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     die("ไม่พบข้อมูลห้องพัก");
@@ -111,8 +115,9 @@ if (isset($_POST['set_primary'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>แก้ไขห้องพัก - <?= htmlspecialchars($room['room_name']) ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
     <link rel="icon" href="./img/icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
 
@@ -120,7 +125,7 @@ if (isset($_POST['set_primary'])) {
         <h1 class="text-3xl font-bold text-center">แก้ไขห้องพัก</h1>
         <div class="absolute top-6 left-4">
             <a href="javascript:history.back()" class="text-gray-700 font-bold text-lg px-4 py-2 rounded-lg hover:text-blue-600">
-                &lt; Back
+            <i class="fa-solid fa-chevron-left"></i>
             </a>
         </div>
     </header>
@@ -151,6 +156,14 @@ if (isset($_POST['set_primary'])) {
                     <div id="imagePreview" class="grid grid-cols-2 gap-2 mt-4"></div>
 
                     <input type="hidden" name="primary_image_index" id="primaryImageIndex" value="0">
+
+                    <h2 class="text-xl font-bold mt-6">ตัวอย่างการ์ดห้องพัก</h2>
+                        <div id="roomPreview" class="mt-4 p-4 border rounded-lg shadow-lg bg-white">
+                            <img id="previewImage" src="<?= htmlspecialchars($primary_image ?: '/hotel_main/src/img/default-room.jpg') ?>" class="w-full h-48 object-cover rounded-md shadow">
+                            <h3 id="previewRoomName" class="text-lg font-bold mt-2"><?= htmlspecialchars($room['room_name']) ?></h3>
+                            <p id="previewRoomDescription" class="text-sm text-gray-700 mt-1"><?= htmlspecialchars($room['room_description']) ?></p>
+                            <p id="previewRoomPrice" class="text-lg font-bold text-green-500 mt-2">฿<?= htmlspecialchars($room['room_price']) ?></p>
+                        </div>
                 </div>
 
                 <button type="submit" name="update_room" class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition">บันทึกการเปลี่ยนแปลง</button>

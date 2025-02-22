@@ -2,6 +2,9 @@
 require 'db.php';
 require 'functions.php';
 
+session_start();
+check_admin();
+
 // รับค่า hotel_id และตรวจสอบ
 $hotelId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$hotelId) {
@@ -58,8 +61,9 @@ $hotelImages = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>แก้ไขข้อมูลโรงแรม</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
 
@@ -67,7 +71,7 @@ $hotelImages = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <h1 class="text-black text-3xl font-bold text-center">แก้ไขข้อมูลโรงแรม</h1>
         <div class="absolute top-6 left-4">
             <a href="javascript:history.back()" class="text-gray-700 font-bold text-lg px-4 py-2 rounded-lg hover:text-blue-600">
-                &lt; Back
+            <i class="fa-solid fa-chevron-left"></i>
             </a>
         </div>
     </header>
