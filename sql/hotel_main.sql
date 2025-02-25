@@ -1,5 +1,5 @@
-CREATE DATABASE hotel_main_test;
-USE hotel_main_test;
+CREATE DATABASE hotel_main;
+USE hotel_main;
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
