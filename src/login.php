@@ -1,32 +1,32 @@
-    <?php // src/login.php
+    <?php //login.php
     session_start();
     require 'db.php';
+    require 'functions.php';
 
-    if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        $email = $_POST['email'];
-        $password = $_POST['password'];
-
-        // ค้นหาผู้ใช้จากฐานข้อมูล
-        $query = "SELECT username, user_role FROM users WHERE email = ?";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $user = $result->fetch_assoc();
-        
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {      
+        $username = $_POST['username']; 
+        $password = $_POST['password']; 
+    
+        $query = "SELECT user_id, username, user_role, password FROM users WHERE username = ?";
+        $stmt = $pdo->prepare($query);
+        $stmt->execute([$username]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    
         if ($user && password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['user_id'];
-            $_SESSION['user_role'] = $user['user_role']; // เก็บ role ของผู้ใช้
-
+            $_SESSION['user_role'] = $user['user_role'];
+    
             if ($user['user_role'] === 'admin') {
-                header("Location: admin_dashboard.php"); // ถ้าเป็น admin ให้ไปหลังบ้าน
+                header("Location: index.php");
+                exit();
             } else {
-                header("Location: index.php"); // ถ้าเป็น user ทั่วไปให้ไปหน้าหลัก
+                header("Location: index.php");
+                exit();
             }
-
-            exit;
         } else {
-            $error = "อีเมลหรือรหัสผ่านไม่ถูกต้อง";
+            $_SESSION['errors'] = ["ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"];
+            header("Location: login.php");
+            exit();
         }
     }
     ?>
@@ -52,7 +52,7 @@
                         </div>
                         <div class="px-10 pt-4 pb-8 bg-white rounded-tr-4xl border-none">
                             <h1 class="text-3xl block text-center font-semibold"><i class="fa-solid fa-user"></i> Login</h1>
-                            <form action="login_db.php" method="post">
+                            <form action="login_db.php" method="POST">
                                 <div class="relative mt-8">
                                     <input id="username" name="username" type="text" class="peer h-10 w-full border-b-2 border-gray-300 text-gray-900 placeholder-transparent focus:outline-none focus:border-black" placeholder="Username" />
                                     <label for="username" class="absolute left-0 -top-3.5 text-gray-600 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2 peer-focus:-top-3.5 peer-focus:text-gray-600 peer-focus:text-sm">Username</label>
@@ -75,7 +75,7 @@
                                     </div>
                                 <?php endif ?>
                                 <div class="mt-8">
-                                    <button type="submit" id="loginBtn" name="login_user" class="border-2 border-black bg-black text-white py-1 w-full rounded-md hover:bg-transparent hover:text-black font-semibold">Login</button>
+                                    <button type="submit" name="login_user" class="border-2 border-black bg-black text-white py-1 w-full rounded-md hover:bg-transparent hover:text-black font-semibold">Login</button>
                                 </div>
                                 <div class="mt-3">
                                     <p class="text-center">Not yet a member? <a href="register.php" class=" text-blue-500 font-semibold">Sign Up</a></p>
@@ -133,9 +133,9 @@
                 });
             </script>
             <?php 
-                unset($_SESSION['show_pin_popup']); // เคลียร์ค่าหลังจากแสดง popup
-            endif;
-        ?>
+                unset($_SESSION['show_pin_popup']); // เคลียร์ค่า popup
+            ?>
+        <?php endif; ?>
 
     </body>
     </html>

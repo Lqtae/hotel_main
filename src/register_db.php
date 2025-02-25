@@ -23,7 +23,7 @@ if (isset($_POST['reg_user'])) {
     }
 
     // ตรวจสอบว่าอีเมลหรือชื่อผู้ใช้มีอยู่แล้วหรือไม่ (ต้องเช็คก่อนสมัคร)
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username OR email = :email LIMIT 1");
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username and email = :email LIMIT 1");
     $stmt->execute(['username' => $username, 'email' => $email]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -39,14 +39,24 @@ if (isset($_POST['reg_user'])) {
         exit();
     }
 
-    // ถ้าผ่านทุกเงื่อนไข ให้สมัครสมาชิก
-    $password = password_hash($password_1, PASSWORD_BCRYPT); // ใช้ password_hash แทน MD5
-    $stmt = $pdo->prepare("INSERT INTO user (username, email, password) VALUES (:username, :email, :password)");
-    $stmt->execute(['username' => $username, 'email' => $email, 'password' => $password]);
+    try {
 
-    $_SESSION['username'] = $username;
-    $_SESSION['success'] = "You are now logged in";
-    header('location: index.php');
-    exit();
+        $password = password_hash($password_1, PASSWORD_BCRYPT);
+        $stmt = $pdo->prepare("INSERT INTO users (username, email, password) VALUES (:username, :email, :password)");
+
+        echo "<pre>";
+        echo "SQL: INSERT INTO users (username, email, password) VALUES ('$username', '$email', '$password')";
+        echo "</pre>";
+
+        $stmt->execute(['username' => $username, 'email' => $email, 'password' => $password]);
+    
+        $_SESSION['username'] = $username;
+        $_SESSION['success'] = "You are now registered";
+        header('location: index.php');
+        exit();
+    } catch (PDOException $e) {
+        die("❌ Database Error: " . $e->getMessage());
+    }
+    
 }
 ?>

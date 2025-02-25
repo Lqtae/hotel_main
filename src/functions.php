@@ -329,4 +329,9 @@ function getHotelImage($pdo, $hotel_id) {
     return $image ? htmlspecialchars($image) : "/hotel_main/src/img/hotel_img/default.jpg";
 }
 
+function getHotelImages($pdo) {
+    $stmt = $pdo->query("SELECT image_path FROM hotel_images ORDER BY RAND() LIMIT 5"); // สุ่ม 5 รูป
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 ?>

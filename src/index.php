@@ -1,4 +1,4 @@
-<?php //index.php
+<?php // index.php
 require 'db.php';
 require 'functions.php';
 
@@ -18,6 +18,7 @@ if (!empty($_SESSION['username'])) {
     }
 }
 
+$hotelImages = getHotelImages($pdo);
 $regionsQuery = $pdo->query("SELECT * FROM regions");
 $regions = $regionsQuery->fetchAll(PDO::FETCH_ASSOC);
 $provincesQuery = $pdo->query("SELECT * FROM provinces");
@@ -33,10 +34,37 @@ $provinces = $provincesQuery->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" type="text/css" href="style.css">
     <link rel="icon" href="./img/icon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    <style>
+        #searchDropdown {
+    width: 818px; /* ขยายให้กว้างขึ้น */
+    max-height: 500px; /* กำหนดความสูงสูงสุด */
+    overflow-y: auto; /* ให้สามารถเลื่อนเฉพาะ dropdown ได้ */
+    border: 1px solid #ddd; /* เพิ่มเส้นขอบ */
+    padding: 5px;
+}
+
+.search-item {
+    padding: 12px;
+    background: white;
+    border-radius: 6px;
+    margin-bottom: 5px;
+    transition: background 0.2s ease-in-out;
+}
+
+.search-item:hover {
+    background: #f1f1f1;
+}
+
+    </style>
+    
+
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
 
-    <header class="w-full bg-gray-100 py-6 shadow-md sticky top-0 z-10"> 
+<header class="w-full bg-gray-100 py-6 shadow-md sticky top-0 z-10"> 
         <h1 class="text-black text-3xl font-bold text-center">Where's Hotel</h1>
         <div class="absolute top-6 right-6">
             <?php if ($userData): ?>
@@ -64,14 +92,32 @@ $provinces = $provincesQuery->fetchAll(PDO::FETCH_ASSOC);
     </header>
 
     <main class="flex-1 w-full max-w-4xl mx-auto mt-8 px-4">
-        
+        <div class="bg-white shadow-md rounded-lg mb-8">
+            <div class="swiper mySwiper ">
+                <div class="swiper-wrapper">
+                    <?php foreach ($hotelImages as $image): ?>
+                        <div class="swiper-slide">
+                            <img src="<?= htmlspecialchars($image['image_path']) ?>" class="w-full h-96 object-cover rounded-lg">
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                    
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+                <div class="swiper-pagination"></div>
+            </div>
+        </div>
+
         <div class="bg-white shadow-md rounded-lg p-6">
         <div class="flex items-center mb-4 gap-4">
-
-            <div class="flex-grow">
+            <div class="relative flex-grow">
                 <label for="search" class="block text-gray-700 text-sm font-medium">ค้นหา:</label>
-                <input type="text" id="search" placeholder="ค้นหาโรงแรมหรือจังหวัด" 
-                       class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black">
+                <input type="text" id="search" placeholder="ค้นหาโรงแรมหรือจังหวัด"
+                        class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black">
+                        <div id="searchDropdown"
+                             class="absolute w-full bg-white rounded-lg shadow-lg max-h-60 overflow-y-auto hidden z-50 border border-gray-300">
+                        </div>
+
             </div>
 
             <div>
@@ -91,96 +137,19 @@ $provinces = $provincesQuery->fetchAll(PDO::FETCH_ASSOC);
                 </select>
             </div>
         </div>
+        </div>
 
-        <div id="results" class="mt-4 space-y-4"></div>
+        <div class="mt-8">
+        <h2 class="text-2xl font-semibold mb-4">ที่พักแนะนำสำหรับท่านโดยเฉพาะ</h2>
+        <div id="top-hotels" class="grid grid-cols-2 gap-6"></div>
     </div>
+    </main>
 
-    <!-- โรงแรมยอดนิยม -->
-    <div class="mt-8">
-        <h2 class="text-2xl font-semibold mb-4">🏨 โรงแรมยอดนิยม</h2>
-        <div id="top-hotels" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-    </div>
+    <footer class="w-full bg-white py-4 mt-8 shadow-md">
+        <p class="text-black text-center text-sm">&copy; 2025 <a href="admin_dashboard.php" class="text-black hover:font-semibold">Where's Hotel</a></p>
+    </footer>
 
-</main>
-
-<footer class="w-full bg-white py-4 mt-8 shadow-md">
-    <p class="text-black text-center text-sm">&copy; 2025 <a href="admin_dashboard.php" class="text-black hover:font-semibold">Where's Hotel</a></p>
-</footer>
-
-<script>
-    document.getElementById('region').addEventListener('change', function() {
-    const regionId = this.value;
-    console.log("Selected Region ID:", regionId); // ✨ เช็คค่า regionId ก่อน fetch
-
-    const provinceSelect = document.getElementById('province');
-    provinceSelect.innerHTML = '<option value="">-- เลือกจังหวัด --</option>';
-    provinceSelect.disabled = !regionId;
-
-    if (regionId) {
-        fetch(`get.php?region_id=${regionId}`) // ใช้ไฟล์ get.php ตามที่แก้ไข
-            .then(response => response.text()) // ✨ ใช้ text() แทน json() เพื่อดูผลลัพธ์
-            .then(data => {
-                console.log("Fetched Data:", data); // ✨ เช็คว่า fetch ได้ข้อมูลอะไรกลับมา
-                provinceSelect.innerHTML += data;
-                provinceSelect.disabled = false;
-            })
-            .catch(error => console.error('Error loading provinces:', error));
-    }
-    performSearch();
-});
-
-    document.getElementById('search').addEventListener('input', performSearch);
-    document.getElementById('province').addEventListener('change', performSearch);
-
-    function performSearch() {
-        const query = document.getElementById('search').value.trim();
-        const region = document.getElementById('region').value;
-        const province = document.getElementById('province').value;
-
-        fetch(`search.php?query=${query}&region=${region}&province=${province}`)
-            .then(response => response.json())
-            .then(data => {
-                const resultsContainer = document.getElementById('results');
-                resultsContainer.innerHTML = '';
-
-                data.forEach(item => {
-                    resultsContainer.innerHTML += `
-                        <div class="p-4 bg-gray-100 rounded-lg shadow-sm">
-                            <a href="hotel_detail.php?id=${item.hotel_id}" class="text-xl font-semibold text-blue-600">${item.hotel_name}</a>
-                            <p class="text-gray-700">ที่อยู่: ${item.address}</p>
-                            <p class="text-gray-700">จังหวัด: ${item.province_name}</p>
-                            <p class="text-gray-700">ภาค: ${item.region_name}</p>
-                        </div>
-                    `;
-                });
-            });
-    }
-
-    function loadTopHotels() {
-        fetch("search.php?query=&region=&province=")
-            .then(response => response.json())
-            .then(data => {
-                const topHotelsContainer = document.getElementById('top-hotels');
-                topHotelsContainer.innerHTML = '';
-                data.slice(0, 6).forEach(hotel => {
-                    topHotelsContainer.innerHTML += `
-                        <div class="bg-white shadow-md rounded-lg overflow-hidden">
-                            <img src="${hotel.image ? hotel.image : '/hotel_main/src/img/default_hotel.jpg'}" class="w-full h-40 object-cover">
-                            <div class="p-4">
-                                <h3 class="text-lg font-semibold text-blue-600">
-                                    <a href="hotel_detail.php?id=${hotel.hotel_id}">${hotel.hotel_name}</a>
-                                </h3>
-                                <p class="text-sm text-gray-500">⭐ ${hotel.star_rating} ดาว</p>
-                                <p class="text-sm text-gray-700">${hotel.province_name}</p>
-                            </div>
-                        </div>
-                    `;
-                });
-            });
-    }
-
-    document.addEventListener("DOMContentLoaded", loadTopHotels);
-</script>
+    <script src="script.js"></script>
 
 </body>
 </html>
