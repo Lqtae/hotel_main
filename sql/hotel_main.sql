@@ -1,10 +1,6 @@
 CREATE DATABASE hotel_main;
 USE hotel_main; 
 
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-START TRANSACTION;
-SET time_zone = "+00:00";
-
 CREATE TABLE `hotels` (
   `hotel_id` int NOT NULL,
   `hotel_name` varchar(100) NOT NULL,
