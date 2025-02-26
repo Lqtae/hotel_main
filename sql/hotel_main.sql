@@ -1,6 +1,45 @@
 CREATE DATABASE hotel_main;
 USE hotel_main; 
 
+--
+-- Table structure for table `audit_log`
+--
+
+CREATE TABLE `audit_log` (
+  `log_id` int NOT NULL,
+  `table_name` varchar(50) DEFAULT NULL,
+  `action_type` enum('INSERT','UPDATE','DELETE') DEFAULT NULL,
+  `affected_id` int DEFAULT NULL,
+  `old_data` text,
+  `new_data` text,
+  `changed_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `audit_log`
+--
+
+INSERT INTO `audit_log` (`log_id`, `table_name`, `action_type`, `affected_id`, `old_data`, `new_data`, `changed_at`) VALUES
+(1, 'hotels', 'INSERT', 207, NULL, 'Name: Grand Hotel, Province ID: 10', '2025-02-26 04:19:32'),
+(2, 'hotels', 'UPDATE', 207, 'Old Name: Grand Hotel, Old Province ID: 10', 'New Name: Luxury Grand Hotel, New Province ID: 10', '2025-02-26 04:20:18'),
+(3, 'hotels', 'DELETE', 207, 'Deleted Name: Luxury Grand Hotel, Province ID: 10', NULL, '2025-02-26 04:21:15'),
+(4, 'hotels', 'INSERT', 208, NULL, 'Name: Weed Hotel, Province ID: 10', '2025-02-26 04:27:58'),
+(5, 'hotels', 'DELETE', 208, 'Deleted Name: Weed Hotel, Province ID: 10', NULL, '2025-02-26 12:50:46'),
+(6, 'hotels', 'INSERT', 209, NULL, 'Name: , Province ID: 39', '2025-02-26 12:51:12'),
+(7, 'hotels', 'DELETE', 209, 'Deleted Name: , Province ID: 39', NULL, '2025-02-26 12:51:55'),
+(8, 'hotels', 'INSERT', 210, NULL, 'Name: กก, Province ID: 39', '2025-02-26 12:54:04'),
+(9, 'hotels', 'INSERT', 211, NULL, 'Name: , Province ID: 39', '2025-02-26 12:54:04'),
+(10, 'hotels', 'DELETE', 210, 'Deleted Name: กก, Province ID: 39', NULL, '2025-02-26 12:54:13'),
+(11, 'hotels', 'DELETE', 211, 'Deleted Name: , Province ID: 39', NULL, '2025-02-26 12:54:16'),
+(12, 'hotels', 'INSERT', 212, NULL, 'Name: , Province ID: 68', '2025-02-26 13:06:06'),
+(13, 'hotels', 'DELETE', 212, 'Deleted Name: , Province ID: 68', NULL, '2025-02-26 13:06:23');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hotels`
+--
+
 CREATE TABLE `hotels` (
   `hotel_id` int NOT NULL,
   `hotel_name` varchar(100) NOT NULL,
@@ -220,6 +259,33 @@ INSERT INTO `hotels` (`hotel_id`, `hotel_name`, `address`, `province_id`, `star_
 (204, 'โรงแรมอิมพีเรียล นราธิวาส (Imperial Narathiwat Hotel)', '260 ถนนพิชิตบำรุง ตำบลนางนาค อำเภอเมืองนราธิวาส นราธิวาส 96000', 73, 3),
 (205, 'โรงแรมเดอะ วูดส์ ปัตตานี (The Wood Pattani Hotel)', '17/10 หมู่ 6 ถนนเจริญประดิษฐ์ ซอย 10 ตำบลรูสะมิแล อำเภอเมืองปัตตานี ปัตตานี 94000', 74, 3),
 (206, 'ปัตตานีภิรมย์ บูทิก โฮเทล (Pattanipirom Boutique Hotel)', '245/93-95 หมู่ 6 ตำบลรูสะมิแล อำเภอเมืองปัตตานี ปัตตานี 94000', 74, 3);
+
+--
+-- Triggers `hotels`
+--
+DELIMITER $$
+CREATE TRIGGER `after_hotel_delete` AFTER DELETE ON `hotels` FOR EACH ROW BEGIN
+    INSERT INTO audit_log (table_name, action_type, affected_id, old_data)
+    VALUES ('hotels', 'DELETE', OLD.hotel_id, CONCAT('Deleted Name: ', OLD.hotel_name, ', Province ID: ', OLD.province_id));
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `after_hotel_insert` AFTER INSERT ON `hotels` FOR EACH ROW BEGIN
+    INSERT INTO audit_log (table_name, action_type, affected_id, new_data)
+    VALUES ('hotels', 'INSERT', NEW.hotel_id, CONCAT('Name: ', NEW.hotel_name, ', Province ID: ', NEW.province_id));
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `after_hotel_update` AFTER UPDATE ON `hotels` FOR EACH ROW BEGIN
+    INSERT INTO audit_log (table_name, action_type, affected_id, old_data, new_data)
+    VALUES ('hotels', 'UPDATE', OLD.hotel_id, 
+            CONCAT('Old Name: ', OLD.hotel_name, ', Old Province ID: ', OLD.province_id),
+            CONCAT('New Name: ', NEW.hotel_name, ', New Province ID: ', NEW.province_id));
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -475,8 +541,8 @@ INSERT INTO `room_types` (`room_type_id`, `room_type_name`) VALUES
 CREATE TABLE `users` (
   `user_id` int(5) UNSIGNED ZEROFILL NOT NULL,
   `username` varchar(100) NOT NULL,
-  `first_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `last_name` varchar(255) NOT NULL,
+  `first_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `last_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `email` varchar(100) NOT NULL,
   `password` varchar(100) NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -491,13 +557,20 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`user_id`, `username`, `first_name`, `last_name`, `email`, `password`, `created_at`, `user_role`, `image_path`, `otp`, `otp_expiry`) VALUES
-(00001, 'nawaphol.kh', 'Nawaphol', 'Khantongkhum', 'nawaphol@gmail.com', '$2y$10$.zGCky0wtIHuM6sU4E.VPulWbhOSSOInLzJG254a1U4tQIJLjUy5y', '2025-02-16 13:41:59', 'Admin', '/hotel_main/src/img/user_img/Lqtae.jpg', '466890', '2025-02-25 20:40:56'),
-(00002, 'lqtae', '', '', 'starlocktv@gmail.com', '$2y$10$.Q4d5esOL3RNl5sXtaJX4Ob5RCLZcszdPxW4g.Zcnml3119BOeD52', '2025-02-16 14:16:56', 'User', NULL, '953961', '2025-02-26 03:40:45'),
-(00006, 'sad', '', '', 'catmoew@gmail.com', '$2y$10$nUOUCWG10hNMaDOHAc8hnein7xOy3QNdHTXSj2H7Lifhd08pRPPn6', '2025-02-25 14:07:35', 'User', NULL, NULL, NULL);
+(00001, 'nawaphol.kh', 'Nawaphol', 'Khantongkhum', 'nawaphol@gmail.com', '$2y$10$4bm6tzlHgoWHjUcXJl8yVOx0GdUO0LwfhrJh/.QlMyRozyY4T./fq', '2025-02-16 13:41:59', 'Admin', '/hotel_main/src/img/user_img/Lqtae.jpg', '466890', '2025-02-25 20:40:56'),
+(00002, 'lqtae', '', '', 'starlocktv@gmail.com', '$2y$10$3Oq/fcJUKQQ.H4O0WA9qJu.oWdSsa/oKrHPcA2rmJ4H.LpHKLjzVa', '2025-02-16 14:16:56', 'User', NULL, '634900', '2025-02-26 07:58:21'),
+(00006, 'sad', '', '', 'catmoew@gmail.com', '$2y$10$nUOUCWG10hNMaDOHAc8hnein7xOy3QNdHTXSj2H7Lifhd08pRPPn6', '2025-02-25 14:07:35', 'User', NULL, NULL, NULL),
+(00007, 'Maxim', NULL, NULL, 'lataegod14@gmail.com', '$2y$10$CqVNtE.lF0BeDM.1N9krgeI94lTMzS/jOiTJRJydfo/YHLVnOxqES', '2025-02-26 04:37:06', 'User', NULL, NULL, NULL);
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `audit_log`
+--
+ALTER TABLE `audit_log`
+  ADD PRIMARY KEY (`log_id`);
 
 --
 -- Indexes for table `hotels`
@@ -558,10 +631,16 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `audit_log`
+--
+ALTER TABLE `audit_log`
+  MODIFY `log_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+
+--
 -- AUTO_INCREMENT for table `hotels`
 --
 ALTER TABLE `hotels`
-  MODIFY `hotel_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=207;
+  MODIFY `hotel_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=213;
 
 --
 -- AUTO_INCREMENT for table `hotel_images`
@@ -603,7 +682,7 @@ ALTER TABLE `room_types`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(5) UNSIGNED ZEROFILL NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `user_id` int(5) UNSIGNED ZEROFILL NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- Constraints for dumped tables
