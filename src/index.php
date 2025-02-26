@@ -76,10 +76,11 @@ $provinces = $provincesQuery->fetchAll(PDO::FETCH_ASSOC);
                 
                 <div class="relative inline-block">
                     <button id="userMenuBtn" class="text-gray-700 text-lg px-4 py-2 hover:text-blue-600">
-                        <i class="fa-solid fa-user"></i> <?= htmlspecialchars($userData['username']); ?>
+                        <i class="fa-solid fa-user"></i> <?= htmlspecialchars($userData['first_name']); ?>
                     </button>
                     <div id="userDropdown" class="hidden absolute right-0 mt-2 w-52 bg-white shadow-md rounded-lg">
                         <a href="profile.php" class="block px-4 py-2 text-gray-700 hover:bg-gray-200">Profile</a>
+                        <a href="contract_admin.php" class="block px-4 py-2 text-gray-700 hover:bg-gray-200">Contract</a>
                         <a href="logout.php" class="block px-4 py-2 text-red-600 hover:bg-gray-200">Logout</a>
                     </div>
                 </div>

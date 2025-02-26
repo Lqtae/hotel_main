@@ -54,7 +54,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <h2>Reset Password Verification Code</h2>
                 <p>Enter this code on the identity verification screen:</p>
                 <h1 style='color: white;'> $otp </h1>
-                <p>This code will expire shortly. If you didn’t try to log in, we recommend that you reset your password now.</p>
+                <p>This code will expire shortly. If you didn't try to log in, we recommend that you reset your password now.</p>
                 </div>";
 
             // Send email
@@ -68,7 +68,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             exit();
         }
     } else {
-        $_SESSION['errors'] = ["ชื่อผู้ใช้ไม่ถูกต้อง"];
+        $_SESSION['errors'] = ["No user found with that username."];
         header("Location: send_otp.php");
         exit();
     }
@@ -94,7 +94,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <h2 class="text-2xl font-semibold text-center mb-4">Reset Your Password</h2>
             <form action="send_otp.php" method="POST">
                 <div class="relative mb-4">
-                    <input type="text" id="username" name="username" class="peer h-10 w-full border-b-2 border-gray-300 text-gray-900 placeholder-transparent focus:outline-none focus:border-black" placeholder="Username">
+                    <input type="text" id="username" name="username" class="peer h-10 w-full border-b-2 border-gray-300 text-gray-900 placeholder-transparent focus:outline-none focus:border-black" placeholder="Username" required>
                     <label for="username" class="absolute left-0 -top-3.5 text-gray-600 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2 peer-focus:-top-3.5 peer-focus:text-gray-600 peer-focus:text-sm">Username</label>
                 </div>
 

@@ -11,7 +11,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     } else {
         // OTP ไม่ถูกต้อง
-        $_SESSION['errors'] = ["OTP ไม่ถูกต้อง"];
+        $_SESSION['errors'] = ["OTP incorrect. Please try again."];
         header("Location: verify_otp.php");
         exit();
     }
@@ -41,12 +41,6 @@ function mask_email($email) {
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.1.2/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100">
-
-    <header class="w-full bg-gray-100 py-6 shadow-md sticky top-0 z-10"> 
-        <h1 class="text-black text-3xl font-bold text-center">Where's Hotel</h1>
-        <div class="absolute top-6 right-6">
-    </header>
-
     <div class="min-h-screen flex justify-center items-center">
         <div class="w-full max-w-md bg-white p-8 rounded-lg shadow-lg">
             <h2 class="text-2xl font-semibold text-center mb-4">Verify OTP</h2>
@@ -79,7 +73,7 @@ function mask_email($email) {
                 <?php endif; ?>
 
                 <div class="mt-8">
-                    <button type="submit" class="w-full bg-black text-white py-2 rounded-md hover:bg-transparent hover:text-black font-semibold">Verify OTP</button>
+                    <button type="submit" class="w-full bg-black border-2 border-black text-white py-2 rounded-md hover:bg-transparent hover:text-black font-semibold">Verify OTP</button>
                 </div>
 
                 <div class="mt-3">

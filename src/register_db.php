@@ -18,7 +18,7 @@ $errors = array();
 
     // เช็คถ้าเป็นอีเมล `nawaphol@gmail.com` ต้องมี PIN และต้องถูกต้อง
     if ($email === 'nawaphol@gmail.com' && $pin !== '232542') {
-        array_push($errors, "❌ PIN ไม่ถูกต้อง!");
+        array_push($errors, "❌ Invalid PIN");
     }
 
     // ตรวจสอบว่าอีเมลหรือชื่อผู้ใช้มีอยู่แล้วหรือไม่ (ต้องเช็คก่อนสมัคร)
@@ -41,13 +41,6 @@ $errors = array();
     try {
         $password = password_hash($password_1, PASSWORD_BCRYPT);
         $stmt = $pdo->prepare("INSERT INTO users (username, email, password) VALUES (:username, :email, :password)");
-    
-        // 🚀 Debug: เช็คค่าก่อน Execute
-        echo "<pre>";
-        echo "👉 Debugging Values:\n";
-        var_dump($username, $email, $password);
-        echo "\nSQL: INSERT INTO users (username, email, password) VALUES ('$username', '$email', '$password')";
-        echo "</pre>";
     
         $stmt->execute(['username' => $username, 'email' => $email, 'password' => $password]);
     

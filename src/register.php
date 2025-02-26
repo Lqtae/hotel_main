@@ -106,7 +106,7 @@
                 document.getElementById('register-form').submit(); // 🔹 ส่งฟอร์ม
             } else {
                 pinError.classList.remove('hidden');
-                pinError.textContent = "❌ PIN ไม่ถูกต้อง!";
+                pinError.textContent = "❌ invalid pin";
             }
         }
 

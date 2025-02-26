@@ -56,10 +56,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Profile</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.0/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="icon" href="./img/icon.png">
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <header class="w-full bg-gray-100 py-6 shadow-md sticky top-0 z-10"> 
+        <h1 class="text-black text-3xl font-bold text-center">Where's Hotel</h1>
 
+        <div class="absolute top-6 left-4">
+            <a href="javascript:history.back()" class="text-gray-700 font-bold text-lg px-4 py-2 rounded-lg hover:text-blue-600">
+            <i class="fa-solid fa-chevron-left"></i>
+            </a>
+        </div>
+    </header>
+
+<main class="w-full max-w-4xl mx-auto mt-2 px-4 flex-grow">
     <div class="max-w-lg mx-auto mt-10 bg-white shadow-lg rounded-lg p-8">
         <h2 class="text-2xl font-semibold text-center text-gray-700">Edit Your Profile</h2>
         <form action="edit_profile.php" method="post" enctype="multipart/form-data" class="mt-6">
@@ -79,16 +90,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="profile_image" class="block text-sm font-medium text-gray-700">Profile Image</label>
                 <input type="file" name="profile_image" id="profile_image" class="w-full p-3 mt-2 border border-gray-300 rounded-md shadow-sm">
                 <?php if (!empty($user['image_path'])) : ?>
-                    <img src="<?= getProfileImage($user['image_path']) ?>" alt="Profile Image" class="mt-4 w-24 h-24 rounded-full border border-gray-300">
+                    <img src="<?= getProfileImage($user['image_path']) ?>" alt="Profile Image" class="mt-4 w-48 h-48 object-cover rounded-full border border-gray-300">
                 <?php endif; ?>
             </div>
             <div class="flex justify-between items-center">
-                <button type="submit" class="w-full py-3 px-6 bg-indigo-500 text-white font-semibold rounded-md shadow-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <button type="submit" class="w-full py-3 px-6 bg-black border-2 border-black text-white font-semibold rounded-md shadow-md hover:bg-transparent hover:text-black">
                     Save Changes
                 </button>
             </div>
         </form>
     </div>
+</main>
+    <footer class="w-full bg-white py-4 mt-8 shadow-md">
+        <p class="text-black text-center text-sm">
+            &copy; 2025 Where's Hotel</a>
+        </p>
+    </footer>
 
 </body>
 </html>
