@@ -1,10 +1,9 @@
-<?php 
+<?php // register_db.php
 session_start();
-include('db.php');
+require 'db.php';
 
 $errors = array();
 
-if (isset($_POST['reg_user'])) {
     $username = $_POST['username'];
     $email = $_POST['email'];
     $password_1 = $_POST['password_1'];
@@ -23,7 +22,7 @@ if (isset($_POST['reg_user'])) {
     }
 
     // ตรวจสอบว่าอีเมลหรือชื่อผู้ใช้มีอยู่แล้วหรือไม่ (ต้องเช็คก่อนสมัคร)
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username and email = :email LIMIT 1");
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username or email = :email LIMIT 1");
     $stmt->execute(['username' => $username, 'email' => $email]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -40,14 +39,16 @@ if (isset($_POST['reg_user'])) {
     }
 
     try {
-
         $password = password_hash($password_1, PASSWORD_BCRYPT);
         $stmt = $pdo->prepare("INSERT INTO users (username, email, password) VALUES (:username, :email, :password)");
-
+    
+        // 🚀 Debug: เช็คค่าก่อน Execute
         echo "<pre>";
-        echo "SQL: INSERT INTO users (username, email, password) VALUES ('$username', '$email', '$password')";
+        echo "👉 Debugging Values:\n";
+        var_dump($username, $email, $password);
+        echo "\nSQL: INSERT INTO users (username, email, password) VALUES ('$username', '$email', '$password')";
         echo "</pre>";
-
+    
         $stmt->execute(['username' => $username, 'email' => $email, 'password' => $password]);
     
         $_SESSION['username'] = $username;
@@ -57,6 +58,4 @@ if (isset($_POST['reg_user'])) {
     } catch (PDOException $e) {
         die("❌ Database Error: " . $e->getMessage());
     }
-    
-}
 ?>

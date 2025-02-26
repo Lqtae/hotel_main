@@ -61,6 +61,9 @@
                                     <input id="password" name="password" type="password" class="peer h-10 w-full border-b-2 border-gray-300 text-gray-900 placeholder-transparent focus:outline-none focus:border-black" placeholder="Password" />
                                     <label for="password" class="absolute left-0 -top-3.5 text-gray-600 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2 peer-focus:-top-3.5 peer-focus:text-gray-600 peer-focus:text-sm">Password</label>
                                 </div>
+                                <div class="mt-3">
+                                    <a href="send_otp.php" class="text-blue-500 text-sm font-semibold mt-2 block hover:text-black">Forgot password?</a>
+                                </div>
                                 <?php if (isset($_SESSION['errors'])) : ?>
                                     <div class="mt-3 bg-red-100 border-l-4 border-red-500 text-red-700 p-3">
                                         <strong>Error:</strong>

@@ -1,105 +1,127 @@
 <?php
 session_start();
 require 'db.php';
+require '../vendor/autoload.php'; // Path to autoload.php for Composer
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require '../vendor/autoload.php'; // Path to autoload.php for Composer
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $email = $_POST['email'];
+    $username = $_POST['username'];
 
-    // Check if email exists in the database
-    $sql = "SELECT users_id, email FROM users WHERE email = '$email'";
-    $result = $conn->query($sql);
+    $query = "SELECT user_id, username, email FROM users WHERE username = ?";
+    $stmt = $pdo->prepare($query);
+    $stmt->execute([$username]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($result->num_rows > 0) {
-        $user = $result->fetch_assoc();
-        
-        // Create OTP
-        $otp = rand(100000, 999999); // 6-digit OTP
+    if ($user) {
+        // Generate OTP
+        $otp = rand(100000, 999999);  // Generate a random 6-digit OTP
+        $_SESSION['otp'] = $otp;
+        $_SESSION['user_id'] = $user['user_id'];
+        $_SESSION['email'] = $user['email']; // Save email in session
 
-        // Set OTP expiry time (1 hour)
-        $otp_expiry = date("Y-m-d H:i:s", strtotime("+1 hour"));
+        // Calculate OTP expiry time (e.g., 10 minutes from now)
+        $otp_expiry = date('Y-m-d H:i:s', strtotime('+10 minutes'));
 
-        // Update OTP and expiry time in the database
-        $update_sql = "UPDATE users SET otp = '$otp', otp_expiry = '$otp_expiry' WHERE email = '$email'";
-        if ($conn->query($update_sql) === TRUE) {
-            // Send OTP to the email
-            $mail = new PHPMailer(true);
-            try {
-                // SMTP Server settings
-                $mail->isSMTP();
-                $mail->Host = 'smtp.gmail.com';
-                $mail->SMTPAuth = true;
-                $mail->Username = 'adminwhereshotel@gmail.com';  // Your email
-                $mail->Password = 'Admin_hotel'; // Your email password or app password
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                $mail->Port = 587;
+        // Insert OTP and expiry into the database
+        $update_query = "UPDATE users SET otp = ?, otp_expiry = ? WHERE user_id = ?";
+        $update_stmt = $pdo->prepare($update_query);
+        $update_stmt->execute([$otp, $otp_expiry, $user['user_id']]);
 
-                // Recipient
-                $mail->setFrom('your_email@gmail.com', 'Where Hotel'); // Your email
-                $mail->addAddress($email); // Recipient's email
+        // Send OTP via email
+        $mail = new PHPMailer(true);
 
-                // Content
-                $mail->isHTML(true);
-                $mail->Subject = 'OTP Password Reset';
-                $mail->Body = "W-<strong>$otp</strong><br> is your OTP for password reset.";
-                $mail->Body .= "<br>Please enter this OTP to verify your identity.";
+        try {
+            // SMTP Server settings
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'whereshotel@gmail.com';  // Your email
+            $mail->Password = 'pwcd mikg qvvz forh'; // Your email password or app password
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = 587;
 
-                $mail->send();
-                // Redirect to verify_otp.php with email and OTP in the URL
-                header("Location: verify_otp.php?email=$email&otp=$otp");
-                exit();
-            } catch (Exception $e) {
-                echo "<div class='alert alert-danger'>Message could not be sent. Mailer Error: {$mail->ErrorInfo}</div>";
-            }
-        } else {
-            echo "<div class='alert alert-danger'>Error updating OTP in database.</div>";
+            // Recipient
+            $mail->setFrom('your_email@gmail.com', 'WhresHotel Password Reset');  // Your email and name
+            $mail->addAddress($user['email'], $user['username']);  // Recipient's email and name
+
+            // Content
+            $mail->isHTML(true);  // Set email format to HTML
+            $mail->Subject = 'Your OTP for Password Reset';
+            $mail->Body    = "<div style='background: black; color: white; padding: 20px; text-align: center; font-family: Arial, sans-serif;'>
+                <img src='https://cdn.discordapp.com/attachments/1335642059817619578/1344061865289973801/icon.png?ex=67bf8aa8&is=67be3928&hm=1faf401ac5078faf5a76ba06325c12222ecb0a54dfccaa362ee2b3b822c32109&' width='80'>
+                <h2>Reset Password Verification Code</h2>
+                <p>Enter this code on the identity verification screen:</p>
+                <h1 style='color: white;'> $otp </h1>
+                <p>This code will expire shortly. If you didn’t try to log in, we recommend that you reset your password now.</p>
+                </div>";
+
+            // Send email
+            $mail->send();
+            $_SESSION['status'] = "OTP ถูกส่งไปยังอีเมลของคุณแล้ว";  // เพิ่มข้อความสถานะ
+            header("Location: verify_otp.php");  // Redirect to OTP verification page
+            exit();
+        } catch (Exception $e) {
+            $_SESSION['errors'] = ["Message could not be sent. Mailer Error: {$mail->ErrorInfo}"];
+            header("Location: send_otp.php");  // Redirect back if email fails
+            exit();
         }
     } else {
-        echo "<div class='alert alert-danger'>Email not found.</div>";
+        $_SESSION['errors'] = ["ชื่อผู้ใช้ไม่ถูกต้อง"];
+        header("Location: send_otp.php");
+        exit();
     }
-}
 
-$conn->close();
+    
+}
 ?>
 
+
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Where's hotel</title>
+    <title>Request OTP</title>
     <link rel="stylesheet" type="text/css" href="style.css">
-    <link rel="icon" href="./img/icon.png">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.1.2/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-dark text-light">
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6 col-lg-4">
-                <div class="card bg-dark text-light p-4">
-                    <h2 class="text-center mb-4">ส่ง OTP เพื่อรีเซ็ตรหัสผ่าน</h2>
-                    <form action="send_otp.php" method="POST">
-                        <div class="mb-3">
-                            <label for="email" class="form-label">อีเมล</label>
-                            <input type="email" name="email" id="email" class="form-control" placeholder="กรุณากรอกอีเมลของคุณ" required>
-                        </div>
-                        <button type="submit" class="btn btn-warning w-100">ส่ง OTP</button>
-                    </form>
-                    <div class="text-center mt-3">
-                        <a href="login.php" class="text-warning">กลับสู่หน้าล็อกอิน</a>
-                    </div>
+<body class="bg-gray-100">
+
+    <div class="min-h-screen flex justify-center items-center">
+        <div class="w-full max-w-md bg-white p-8 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-semibold text-center mb-4">Reset Your Password</h2>
+            <form action="send_otp.php" method="POST">
+                <div class="relative mb-4">
+                    <input type="text" id="username" name="username" class="peer h-10 w-full border-b-2 border-gray-300 text-gray-900 placeholder-transparent focus:outline-none focus:border-black" placeholder="Username">
+                    <label for="username" class="absolute left-0 -top-3.5 text-gray-600 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2 peer-focus:-top-3.5 peer-focus:text-gray-600 peer-focus:text-sm">Username</label>
                 </div>
-            </div>
+
+                <?php if (isset($_SESSION['errors'])): ?>
+                    <div class="mt-3 bg-red-100 border-l-4 border-red-500 text-red-700 p-3">
+                        <strong>Error:</strong>
+                        <ul class="list-disc pl-5">
+                            <?php 
+                                foreach ($_SESSION['errors'] as $error) {
+                                    echo "<li>$error</li>";
+                                }
+                                unset($_SESSION['errors']);
+                            ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+
+                <div class="mt-8">
+                    <button type="submit" class="w-full bg-black text-white py-2 border-2 border-black rounded-md hover:bg-transparent hover:text-black font-semibold">Request OTP</button>
+                </div>
+
+                <div class="mt-3">
+                    <p class="text-center">Remember your password? <a href="login.php" class="text-blue-500 font-semibold">Login</a></p>
+                </div>
+            </form>
         </div>
     </div>
 
-    <footer class="w-full bg-white py-4 mt-8 shadow-md">
-        <p class="text-black text-center text-sm">&copy; 2025 Where's Hotel</p>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

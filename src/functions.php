@@ -315,7 +315,7 @@ function deleteRoom($pdo, $room_id) {
 }
 
 function check_admin() {
-    if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+    if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'Admin') {
         header("Location: index.php");
         exit();
     }
@@ -333,5 +333,16 @@ function getHotelImages($pdo) {
     $stmt = $pdo->query("SELECT image_path FROM hotel_images ORDER BY RAND() LIMIT 5"); // สุ่ม 5 รูป
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+function getProfileImage($image_path) {
+    if (!empty($image_path)) {
+        $full_path = $_SERVER['DOCUMENT_ROOT'] . $image_path;
+        if (file_exists($full_path)) {
+            return $image_path;
+        }
+    }
+    return '/src/img/user_img/default-profile.png';
+}
+
 
 ?>

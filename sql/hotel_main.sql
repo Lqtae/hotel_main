@@ -1,10 +1,9 @@
 CREATE DATABASE hotel_main;
-USE hotel_main;
+USE hotel_main; 
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
-
 
 CREATE TABLE `hotels` (
   `hotel_id` int NOT NULL,
@@ -480,20 +479,25 @@ INSERT INTO `room_types` (`room_type_id`, `room_type_name`) VALUES
 CREATE TABLE `users` (
   `user_id` int(5) UNSIGNED ZEROFILL NOT NULL,
   `username` varchar(100) NOT NULL,
+  `first_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `last_name` varchar(255) NOT NULL,
   `email` varchar(100) NOT NULL,
   `password` varchar(100) NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `user_role` enum('admin','user') NOT NULL DEFAULT 'user'
+  `user_role` enum('Admin','User') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'User',
+  `image_path` varchar(255) DEFAULT NULL,
+  `otp` varchar(6) DEFAULT NULL COMMENT 'OTP',
+  `otp_expiry` datetime DEFAULT NULL COMMENT 'วันหมดอายุของ OTP'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`user_id`, `username`, `email`, `password`, `created_at`, `user_role`) VALUES
-(00001, 'nawaphol.kh', 'nawaphol@gmail.com', '$2y$10$.zGCky0wtIHuM6sU4E.VPulWbhOSSOInLzJG254a1U4tQIJLjUy5y', '2025-02-16 13:41:59', 'admin'),
-(00002, 'lqtae', 'starlocktv@gmail.com', '$2y$10$h1e..H7F9bOJdhw9g1Zh6Oq0tI/XNFXk.EDBn3bQD7mMT11jBIN/u', '2025-02-16 14:16:56', 'user'),
-(00005, 'Admin', 'nawaphol@admin.com', '$2y$10$hEg3y45SxmGJ60dABB8CiOZ847sM4VwAP0bQMKizcth0FAaUyv3q.', '2025-02-16 16:29:57', 'admin');
+INSERT INTO `users` (`user_id`, `username`, `first_name`, `last_name`, `email`, `password`, `created_at`, `user_role`, `image_path`, `otp`, `otp_expiry`) VALUES
+(00001, 'nawaphol.kh', 'Nawaphol', 'Khantongkhum', 'nawaphol@gmail.com', '$2y$10$.zGCky0wtIHuM6sU4E.VPulWbhOSSOInLzJG254a1U4tQIJLjUy5y', '2025-02-16 13:41:59', 'Admin', '/hotel_main/src/img/user_img/Lqtae.jpg', '466890', '2025-02-25 20:40:56'),
+(00002, 'lqtae', '', '', 'starlocktv@gmail.com', '$2y$10$.Q4d5esOL3RNl5sXtaJX4Ob5RCLZcszdPxW4g.Zcnml3119BOeD52', '2025-02-16 14:16:56', 'User', NULL, '953961', '2025-02-26 03:40:45'),
+(00006, 'sad', '', '', 'catmoew@gmail.com', '$2y$10$nUOUCWG10hNMaDOHAc8hnein7xOy3QNdHTXSj2H7Lifhd08pRPPn6', '2025-02-25 14:07:35', 'User', NULL, NULL, NULL);
 
 --
 -- Indexes for dumped tables
@@ -603,7 +607,7 @@ ALTER TABLE `room_types`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(5) UNSIGNED ZEROFILL NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `user_id` int(5) UNSIGNED ZEROFILL NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Constraints for dumped tables

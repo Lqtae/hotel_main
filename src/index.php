@@ -14,7 +14,7 @@ if (!empty($_SESSION['username'])) {
     $userData = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($userData && isset($userData['user_role'])) {
-        $isAdmin = ($userData['user_role'] === 'admin');
+        $isAdmin = ($userData['user_role'] === 'Admin');
     }
 }
 

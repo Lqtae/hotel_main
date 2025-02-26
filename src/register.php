@@ -24,7 +24,7 @@
                 </div>
                 <div class="px-10 pt-4 pb-8 bg-white rounded-tr-4xl border-none">
                 <h1 class="text-3xl block text-center font-semibold"><i class="fa-regular fa-registered"></i> Register</h1>
-                    <form id="register-form" action="register_db.php" method="post" onsubmit="return checkEmail();">
+                    <form id="register-form" action="register_db.php" method="POST" onsubmit="return checkEmail();">
                         <div class="relative mt-8">
                             <input type="text" name="username" id="username" class="peer h-10 w-full border-b-2 border-gray-300 text-gray-900 placeholder-transparent focus:outline-none focus:border-black" placeholder="Username">
                             <label for="username" class="absolute left-0 -top-3.5 text-gray-600 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2 peer-focus:-top-3.5 peer-focus:text-gray-600 peer-focus:text-sm">Username</label>
@@ -96,7 +96,6 @@
             let pinError = document.getElementById('pin-error');
                 
             if (pin === "232542") {
-                // ✅ สร้าง input ซ่อนเพื่อส่งค่า PIN ไปกับฟอร์ม
                 let pinInputHidden = document.createElement("input");
                 pinInputHidden.type = "hidden";
                 pinInputHidden.name = "pin";
